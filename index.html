@@ -1,0 +1,2938 @@
+<!DOCTYPE html>
+<html lang="id" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Virtual Lab: Simulasi Interaktif Rangkaian AC</title>
+
+  <!-- Favicon SVG: petir biru -->
+  <link rel="icon" type="image/svg+xml"
+    href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%230ea5e9' stroke='%230ea5e9' stroke-width='1.5' stroke-linejoin='round' stroke-linecap='round'%3E%3Cpolygon points='13 2 3 14 12 14 11 22 21 10 12 10 13 2'/%3E%3C/svg%3E" />
+
+  <!-- Google Font: Nunito -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&display=swap" rel="stylesheet" />
+
+  <!-- KaTeX CSS -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.css" />
+   <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js" onload="renderMathInElement(document.body);"></script>
+
+  <!-- Tailwind CSS (CDN) + Dark Mode berbasis class -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: { sans: ['Nunito', 'ui-sans-serif', 'system-ui', 'sans-serif'] },
+        },
+      },
+    };
+  </script>
+
+  <!-- Lucide Icons (CDN) -->
+  <script src="https://unpkg.com/lucide@latest"></script>
+
+    <!-- Chart.js untuk Lab RLC -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body, header, footer { transition: background-color .3s ease, color .3s ease, border-color .3s ease; }
+
+    .view-enter { animation: viewIn .45s ease both; }
+    @keyframes viewIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+
+    .modal-pop { animation: pop .28s cubic-bezier(.2,.9,.3,1.2) both; }
+    @keyframes pop { from { opacity: 0; transform: scale(.94) translateY(8px); } to { opacity: 1; transform: scale(1) translateY(0); } }
+
+    .float-slow { animation: floaty 5s ease-in-out infinite; }
+    @keyframes floaty { 0%, 100% { transform: translateY(0) rotate(-6deg); } 50% { transform: translateY(-10px) rotate(6deg); } }
+
+    @media (prefers-reduced-motion: reduce) {
+      .view-enter, .float-slow, .modal-pop { animation: none; }
+      html { scroll-behavior: auto; }
+    }
+
+    /* ---- Daftar isi ---- */
+    .toc-link { display: block; border-radius: .5rem; padding: .4rem .75rem; transition: background-color .2s, color .2s; }
+    .toc-link:hover { background: #f0f9ff; color: #0284c7; }
+    .dark .toc-link:hover { background: #334155; color: #38bdf8; }
+
+    /* ---- Konten teori ---- */
+    summary { list-style: none; }
+    summary::-webkit-details-marker { display: none; }
+
+    .kt { line-height: 1.85; color: #334155; }
+    .dark .kt { color: #cbd5e1; }
+    .kt p { margin: .85rem 0; }
+    .kt h3 { font-weight: 800; margin: 1.5rem 0 .4rem; font-size: 1.1rem; color: #0f172a; }
+    .dark .kt h3 { color: #f1f5f9; }
+    .kt strong { color: #0f172a; }
+    .dark .kt strong { color: #f8fafc; }
+    .kt ul, .kt ol { padding-left: 1.4rem; margin: .75rem 0; }
+    .kt ul { list-style: disc; }
+    .kt ol { list-style: decimal; }
+    .kt li { margin: .3rem 0; }
+    .kt table { width: 100%; border-collapse: collapse; margin: 1rem 0; font-size: .95rem; }
+    .kt th, .kt td { padding: .6rem .8rem; border: 1px solid #e2e8f0; text-align: left; vertical-align: top; }
+    .dark .kt th, .dark .kt td { border-color: #334155; }
+    .kt th { background: #f1f5f9; font-weight: 800; }
+    .dark .kt th { background: #0f172a; }
+
+    /* Kotak contoh (kuning), analogi (hijau), fakta menarik (biru muda) */
+    .callout { border-left: 4px solid #f59e0b; background: #fffbeb; border-radius: .75rem; padding: .9rem 1.1rem; margin: 1rem 0; }
+    .dark .callout { background: rgba(245,158,11,.1); }
+    .analogi { border-left: 4px solid #10b981; background: #ecfdf5; border-radius: .75rem; padding: .9rem 1.1rem; margin: 1rem 0; }
+    .dark .analogi { background: rgba(16,185,129,.1); }
+    .callout > :first-child, .analogi > :first-child { margin-top: 0; }
+    .callout > :last-child, .analogi > :last-child { margin-bottom: 0; }
+
+    .fact { background: #f0f9ff; border: 1px solid #bae6fd; border-radius: 1rem; padding: 1rem 1.25rem; margin: 1.5rem 0; }
+    .dark .fact { background: rgba(14,165,233,.1); border-color: rgba(14,165,233,.35); }
+    .fact p { margin: .4rem 0 0; }
+
+    /* Penurunan matematis (details) */
+    details.deriv { border: 1px solid #e2e8f0; background: #f8fafc; border-radius: .75rem; margin: 1rem 0; }
+    .dark details.deriv { border-color: #334155; background: rgba(15,23,42,.5); }
+    details.deriv > summary { display: flex; align-items: center; justify-content: space-between; gap: .75rem; cursor: pointer; padding: .7rem 1rem; font-weight: 800; color: #0284c7; }
+    .dark details.deriv > summary { color: #38bdf8; }
+    details.deriv .chev { transition: transform .2s; }
+    details.deriv[open] .chev { transform: rotate(180deg); }
+    details.deriv > .deriv-body { padding: 0 1rem 1rem; }
+
+    .katex-display { overflow-x: auto; overflow-y: hidden; padding: .25rem 0; margin: 1rem 0; }
+        /* ---- Kuis ---- */
+    .q-in { animation: qIn .35s ease both; }
+    @keyframes qIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+    .opt-pop { animation: optPop .35s cubic-bezier(.2,.9,.3,1.4); }
+    @keyframes optPop { 0% { transform: scale(1); } 50% { transform: scale(1.03); } 100% { transform: scale(1); } }
+    .opt-shake { animation: optShake .35s ease; }
+    @keyframes optShake { 0%, 100% { transform: translateX(0); } 25% { transform: translateX(-6px); } 75% { transform: translateX(6px); } }
+    .star-pop { opacity: 0; animation: starPop .5s cubic-bezier(.2,.9,.3,1.5) forwards; }
+    @keyframes starPop { from { opacity: 0; transform: scale(.2) rotate(-40deg); } to { opacity: 1; transform: scale(1) rotate(0); } }
+    .confetti { position: fixed; top: -14px; width: 9px; height: 14px; z-index: 70; pointer-events: none; animation: confettiFall linear forwards; }
+    @keyframes confettiFall { to { transform: translateY(110vh) rotate(720deg); } }
+    .ring-draw { transition: stroke-dashoffset 1s ease; }
+    @media (prefers-reduced-motion: reduce) {
+      .q-in, .opt-pop, .opt-shake, .star-pop { animation: none; opacity: 1; }
+      .confetti { display: none; }
+      .ring-draw { transition: none; }
+    }
+  </style>
+</head>
+
+<body class="font-sans bg-slate-50 text-slate-800 dark:bg-slate-900 dark:text-slate-100 min-h-screen flex flex-col antialiased">
+
+  <!-- ============ HEADER ============ -->
+  <header class="sticky top-0 z-50 backdrop-blur-md bg-white/80 dark:bg-slate-900/80 border-b border-slate-200/70 dark:border-slate-700/60">
+    <div class="max-w-6xl mx-auto flex items-center justify-between gap-2 px-4 h-16">
+
+      <!-- Kiri: Tombol Kembali + Logo -->
+      <div class="flex items-center gap-2 sm:gap-3 min-w-0">
+        <button id="back-btn" type="button" aria-label="Kembali ke beranda"
+          class="hidden items-center gap-1.5 p-2 sm:px-3 sm:py-1.5 rounded-full border border-slate-300 dark:border-slate-600 text-sm font-bold hover:border-sky-500 hover:text-sky-600 dark:hover:text-sky-400 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
+          <i data-lucide="arrow-left" class="w-4 h-4"></i>
+          <span class="hidden sm:inline">Kembali</span>
+        </button>
+
+        <button type="button" onclick="showView('home-view')"
+          class="flex items-center gap-2 group rounded-lg focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+          aria-label="Ke beranda">
+          <i data-lucide="zap" class="w-7 h-7 text-sky-500 group-hover:scale-110 transition-transform"></i>
+          <span class="text-xl font-extrabold tracking-tight">Virtual Lab</span>
+        </button>
+      </div>
+
+      <!-- Kanan: Masuk / Halo + Toggle tema -->
+      <div class="flex items-center gap-2 sm:gap-3">
+
+        <button id="login-btn" type="button"
+          class="px-5 py-1.5 rounded-full border-2 border-sky-500 text-sky-600 dark:text-sky-400 font-bold hover:bg-sky-500 hover:text-white dark:hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
+          Masuk
+        </button>
+
+        <div id="user-menu" class="relative hidden">
+          <button id="user-btn" type="button" aria-haspopup="menu" aria-expanded="false"
+            class="flex items-center gap-2 px-4 py-1.5 rounded-full border-2 border-sky-500 text-sky-600 dark:text-sky-400 font-bold hover:bg-sky-500 hover:text-white dark:hover:text-white transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
+            <span id="user-label" class="max-w-[6rem] sm:max-w-[10rem] truncate">Halo!</span>
+            <i data-lucide="chevron-down" class="w-4 h-4 shrink-0"></i>
+          </button>
+          <div id="user-dropdown" role="menu"
+            class="hidden absolute right-0 mt-2 w-44 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 shadow-xl p-1.5">
+            <button id="logout-btn" type="button" role="menuitem"
+              class="w-full flex items-center gap-2 px-3 py-2 rounded-lg text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-500/10 dark:hover:text-rose-400 transition-colors">
+              <i data-lucide="log-out" class="w-4 h-4"></i> Keluar
+            </button>
+          </div>
+        </div>
+
+        <button id="theme-toggle" type="button"
+          class="p-2.5 rounded-full bg-slate-100 hover:bg-sky-100 dark:bg-slate-800 dark:hover:bg-slate-700 text-slate-700 dark:text-slate-200 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500"
+          aria-label="Ganti mode terang/gelap">
+          <i data-lucide="moon" class="w-5 h-5 dark:hidden"></i>
+          <i data-lucide="sun" class="w-5 h-5 hidden dark:block text-amber-300"></i>
+        </button>
+      </div>
+    </div>
+  </header>
+
+  <!-- ============ MAIN ============ -->
+  <main class="flex-1">
+
+    <!-- ---------- HOME VIEW ---------- -->
+    <div id="home-view" class="view-enter">
+
+      <section class="relative isolate overflow-hidden">
+        <img
+          src="https://images.unsplash.com/photo-1518770660439-4636190af475?q=80&w=2070&auto=format&fit=crop"
+          alt="" class="absolute inset-0 -z-20 w-full h-full object-cover" />
+        <div class="absolute inset-0 -z-10 bg-slate-900/60"></div>
+
+        <div class="max-w-6xl mx-auto px-4 pt-24 pb-40 md:pt-32 md:pb-48 text-center">
+          <div class="float-slow inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-sky-500/90 shadow-lg shadow-sky-500/30 mb-6">
+            <i data-lucide="zap" class="w-9 h-9 text-white"></i>
+          </div>
+
+          <h1 class="text-4xl md:text-6xl font-extrabold text-white tracking-tight leading-tight">
+            Simulasi Interaktif Rangkaian AC
+          </h1>
+
+          <p class="mt-5 text-lg text-slate-200 max-w-2xl mx-auto">
+            Pelajari perilaku komponen listrik dalam rangkaian AC secara visual.
+          </p>
+
+          <button id="start-btn" type="button"
+            class="mt-9 bg-sky-500 text-white rounded-full px-8 py-3 font-bold shadow-lg shadow-sky-500/30 hover:scale-105 transition-transform focus:outline-none focus-visible:ring-4 focus-visible:ring-sky-300/60">
+            Mulai Belajar
+          </button>
+        </div>
+      </section>
+
+      <section id="menu-section" class="pb-20 scroll-mt-24">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 max-w-6xl mx-auto -mt-16 relative z-10 px-4">
+
+          <article data-target="theory-view" role="button" tabindex="0"
+            class="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-lg border border-slate-200 dark:border-slate-700 cursor-pointer group hover:-translate-y-2 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
+            <div class="w-14 h-14 rounded-2xl bg-sky-100 dark:bg-sky-500/15 flex items-center justify-center mb-6">
+              <i data-lucide="book-open" class="w-7 h-7 text-sky-500 group-hover:scale-110 transition-transform"></i>
+            </div>
+            <h2 class="text-xl font-extrabold mb-2">Modul Teori</h2>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              Pelajari konsep dasar AC, phasor, dan bilangan kompleks secara komprehensif.
+            </p>
+          </article>
+
+          <article data-target="lab-view" role="button" tabindex="0"
+            class="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-lg border border-slate-200 dark:border-slate-700 cursor-pointer group hover:-translate-y-2 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
+            <div class="w-14 h-14 rounded-2xl bg-sky-100 dark:bg-sky-500/15 flex items-center justify-center mb-6">
+              <i data-lucide="circuit-board" class="w-7 h-7 text-sky-500 group-hover:scale-110 transition-transform"></i>
+            </div>
+            <h2 class="text-xl font-extrabold mb-2">Lab RLC</h2>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              Eksperimen virtual interaktif untuk mengamati perubahan impedansi, arus, dan fase saat nilai R, L, dan C diubah.
+            </p>
+          </article>
+
+          <article data-target="quiz-view" role="button" tabindex="0"
+            class="bg-white dark:bg-slate-800 rounded-2xl p-8 shadow-lg border border-slate-200 dark:border-slate-700 cursor-pointer group hover:-translate-y-2 transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
+            <div class="w-14 h-14 rounded-2xl bg-sky-100 dark:bg-sky-500/15 flex items-center justify-center mb-6">
+              <i data-lucide="trophy" class="w-7 h-7 text-sky-500 group-hover:scale-110 transition-transform"></i>
+            </div>
+            <h2 class="text-xl font-extrabold mb-2">Kuis</h2>
+            <p class="text-slate-600 dark:text-slate-400 leading-relaxed">
+              Uji pemahaman Anda dengan kuis interaktif bertingkat dan pembahasan.
+            </p>
+          </article>
+
+        </div>
+      </section>
+    </div>
+
+    <!-- ---------- THEORY VIEW ---------- -->
+    <div id="theory-view" class="hidden">
+      <div class="max-w-6xl mx-auto px-4 py-8">
+
+        <div class="mb-8">
+          <p class="text-sm font-extrabold uppercase tracking-widest text-sky-500">Modul Teori</p>
+          <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mt-1">Dasar Rangkaian Arus Bolak-Balik</h1>
+        </div>
+
+        <div class="lg:grid lg:grid-cols-[16rem_1fr] gap-8 items-start">
+
+          <!-- Sidebar Daftar Isi: sticky top-24 di desktop, accordion di HP -->
+          <aside class="mb-6 lg:mb-0 lg:sticky lg:top-24 lg:self-start">
+            <nav aria-label="Daftar isi"
+              class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm">
+              <button id="toc-toggle" type="button" aria-expanded="false" aria-controls="toc-list"
+                class="lg:hidden w-full flex items-center justify-between px-5 py-4 font-extrabold">
+                <span class="flex items-center gap-2"><i data-lucide="list" class="w-5 h-5 text-sky-500"></i> Daftar Isi</span>
+                <i id="toc-chevron" data-lucide="chevron-down" class="w-5 h-5 transition-transform"></i>
+              </button>
+
+              <div id="toc-list" class="hidden lg:block px-5 pb-5 lg:pt-5 lg:max-h-[calc(100vh-8rem)] lg:overflow-y-auto">
+                <p class="hidden lg:block font-extrabold mb-3">Daftar Isi</p>
+                <ul class="space-y-1 text-sm font-semibold">
+                  <li><a href="#sec-1" class="toc-link">Bab 1. Kenapa Ada Listrik AC?</a></li>
+                  <li><a href="#sec-2" class="toc-link">Bab 2. Anatomi Gelombang Sinusoidal</a></li>
+                  <li><a href="#sec-3" class="toc-link">Bab 3. Misteri Angka 220V</a></li>
+                  <li><a href="#sec-4" class="toc-link">Bab 4. Trik Analisis AC (Phasor &amp; Bilangan Kompleks)</a></li>
+                  <li><a href="#sec-5" class="toc-link">Bab 5. Karakter 3 Komponen (R, L, C)</a></li>
+                  <li><a href="#sec-6" class="toc-link">Bab 6. Menggabungkan Hambatan</a></li>
+                  <li><a href="#sec-7" class="toc-link">Bab 7. Resonansi &amp; Daya Listrik</a></li>
+                  <li><a href="#sec-8" class="toc-link">Bab 8. Aplikasi Nyata (Filter RLC)</a></li>
+                  <li><a href="#sec-9" class="toc-link">Bab 9. Glosarium</a></li>
+                </ul>
+              </div>
+            </nav>
+          </aside>
+
+          <!-- Konten -->
+          <div class="min-w-0 space-y-6">
+
+            <!-- ================= BAB 1 ================= -->
+            <section id="sec-1" class="scroll-mt-24 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 md:p-8">
+              <h2 class="text-2xl font-extrabold">Bab 1: Kenapa Ada Listrik AC?</h2>
+              <div class="kt">
+                <p>Bayangkan dua cara memindahkan air lewat pipa. Cara pertama: pompa yang selalu mendorong air ke <em>satu arah</em>. Itulah <strong>DC</strong> (<em>Direct Current</em>, arus searah), seperti listrik dari baterai HP. Cara kedua: pompa yang mendorong air maju, menariknya mundur, maju lagi, mundur lagi, puluhan kali setiap detik. Itulah <strong>AC</strong> (<em>Alternating Current</em>, arus bolak-balik), seperti listrik PLN di stopkontak rumah kita. Airnya (elektron) sebenarnya cuma bergetar di tempat, tapi energinya tetap sampai ke lampu.</p>
+
+                <div class="overflow-x-auto">
+                  <table>
+                    <thead>
+                      <tr><th>Aspek</th><th>DC (contoh: baterai)</th><th>AC (contoh: listrik PLN)</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>Arah arus</td><td>Tetap, satu arah</td><td>Berbalik arah secara periodik</td></tr>
+                      <tr><td>Tegangan terhadap waktu</td><td>Konstan</td><td>Berubah, umumnya mengikuti gelombang sinus</td></tr>
+                      <tr><td>Sumber</td><td>Baterai, aki, panel surya</td><td>Generator di pembangkit listrik</td></tr>
+                      <tr><td>Mengubah level tegangan</td><td>Sulit, perlu rangkaian elektronik khusus</td><td>Mudah, cukup dengan transformator</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <h3>Dari mana arus bolak-balik itu lahir?</h3>
+                <p>Jawabannya: dari <strong>putaran</strong>. Pernah lihat dinamo sepeda? Roda berputar, magnet di dalamnya ikut berputar, lalu lampu menyala. Pembangkit listrik raksasa (PLTA, PLTU, PLTD) bekerja dengan prinsip yang sama: air, uap, atau mesin diesel memutar turbin, dan turbin memutar kumparan di dalam medan magnet.</p>
+                <p>Kuncinya adalah <strong>Hukum Induksi Faraday</strong>: kalau jumlah garis medan magnet yang menembus sebuah kumparan (disebut <em>fluks magnetik</em>) berubah, di ujung kumparan muncul tegangan. Tegangan itu dinamai <strong>GGL induksi</strong> (gaya gerak listrik). Makin cepat perubahannya dan makin banyak lilitannya, makin besar tegangannya.</p>
+
+                <!-- Gambar SVG: kumparan di antara magnet -->
+                <figure class="my-6 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 p-3">
+                  <svg viewBox="0 0 580 250" class="w-full h-auto text-slate-600 dark:text-slate-300" role="img" aria-label="Kumparan berputar di antara magnet utara dan selatan; arah arus berbalik setelah setengah putaran">
+                    <defs>
+                      <marker id="c1-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="currentColor" /></marker>
+                      <marker id="c1-cur" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="5" markerHeight="5" orient="auto"><path d="M0 0L10 5L0 10z" fill="#f59e0b" /></marker>
+                      <marker id="c1-rot" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="6" markerHeight="6" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8b5cf6" /></marker>
+                      <g id="c1-base">
+                        <rect x="8" y="55" width="44" height="110" rx="6" fill="#ef4444" />
+                        <text x="30" y="118" font-size="20" font-weight="800" fill="#ffffff" text-anchor="middle">U</text>
+                        <rect x="218" y="55" width="44" height="110" rx="6" fill="#3b82f6" />
+                        <text x="240" y="118" font-size="20" font-weight="800" fill="#ffffff" text-anchor="middle">S</text>
+                        <line x1="56" y1="85" x2="214" y2="85" stroke="currentColor" stroke-width="1" stroke-dasharray="5 4" opacity=".5" marker-end="url(#c1-ah)" />
+                        <line x1="56" y1="115" x2="214" y2="115" stroke="currentColor" stroke-width="1" stroke-dasharray="5 4" opacity=".5" marker-end="url(#c1-ah)" />
+                        <line x1="56" y1="145" x2="214" y2="145" stroke="currentColor" stroke-width="1" stroke-dasharray="5 4" opacity=".5" marker-end="url(#c1-ah)" />
+                        <line x1="135" y1="64" x2="135" y2="172" stroke="currentColor" stroke-width="1.5" stroke-dasharray="2 3" opacity=".6" />
+                      </g>
+                    </defs>
+
+                    <text x="135" y="16" font-size="13" font-weight="800" fill="currentColor" text-anchor="middle">Setengah putaran pertama</text>
+                    <text x="435" y="16" font-size="13" font-weight="800" fill="currentColor" text-anchor="middle">Setengah putaran kedua</text>
+
+                    <use href="#c1-base" />
+                    <use href="#c1-base" x="300" />
+
+                    <!-- Kumparan A -->
+                    <rect x="108" y="70" width="54" height="80" rx="3" fill="rgba(14,165,233,.12)" stroke="currentColor" stroke-width="3" />
+                    <line x1="94" y1="124" x2="94" y2="94" stroke="#f59e0b" stroke-width="3" marker-end="url(#c1-cur)" />
+                    <line x1="176" y1="94" x2="176" y2="124" stroke="#f59e0b" stroke-width="3" marker-end="url(#c1-cur)" />
+                    <path d="M 100 62 Q 135 38 170 62" fill="none" stroke="#8b5cf6" stroke-width="2.5" marker-end="url(#c1-rot)" />
+
+                    <!-- Kumparan B -->
+                    <rect x="408" y="70" width="54" height="80" rx="3" fill="rgba(14,165,233,.12)" stroke="currentColor" stroke-width="3" />
+                    <line x1="394" y1="94" x2="394" y2="124" stroke="#f59e0b" stroke-width="3" marker-end="url(#c1-cur)" />
+                    <line x1="476" y1="124" x2="476" y2="94" stroke="#f59e0b" stroke-width="3" marker-end="url(#c1-cur)" />
+                    <path d="M 400 62 Q 435 38 470 62" fill="none" stroke="#8b5cf6" stroke-width="2.5" marker-end="url(#c1-rot)" />
+
+                    <text x="135" y="204" font-size="12" fill="currentColor" text-anchor="middle">Arus mengalir ke satu arah</text>
+                    <text x="435" y="204" font-size="12" fill="currentColor" text-anchor="middle">Arus berbalik arah</text>
+                    <text x="290" y="238" font-size="11" fill="currentColor" text-anchor="middle" opacity=".85">Panah ungu: arah putaran. Panah kuning: arah arus. Garis putus-putus: medan magnet (U ke S).</text>
+                  </svg>
+                </figure>
+
+                <p>Lihat gambarnya. Pada setengah putaran pertama, sisi kiri kumparan bergerak naik dan sisi kanan bergerak turun sambil memotong garis medan magnet, sehingga arus mengalir ke satu arah. Setelah melewati setengah putaran, posisi kedua sisi <em>tertukar</em>: sisi yang tadi naik kini turun, dan sebaliknya. Akibatnya arus <strong>berbalik arah</strong>. Putaran terus berlanjut, arus pun terus bolak-balik. Itulah AC.</p>
+                <p>Besar tegangan puncak yang dihasilkan generator ditentukan oleh empat hal:</p>
+                \[ V_m = N\,B\,A\,\omega \]
+                <ul>
+                  <li>\(N\) : jumlah lilitan kumparan</li>
+                  <li>\(B\) : kuat medan magnet (tesla)</li>
+                  <li>\(A\) : luas kumparan (m²)</li>
+                  <li>\(\omega\) : kecepatan putar (rad/s)</li>
+                </ul>
+                <p>Jadi kalau ingin tegangan lebih besar, putar lebih cepat atau tambah lilitan.</p>
+
+                <details class="deriv">
+                  <summary><span class="flex items-center gap-2"><i data-lucide="sigma" class="w-5 h-5"></i> Lihat Penurunan Matematis</span><i data-lucide="chevron-down" class="chev w-5 h-5 shrink-0"></i></summary>
+                  <div class="deriv-body">
+                    <p>Misalkan pada \(t = 0\) bidang kumparan tegak lurus medan magnet (fluks maksimum). Setelah berputar dengan kecepatan sudut \(\omega\), sudut antara normal kumparan dan medan magnet adalah \(\omega t\), sehingga fluks yang menembus satu lilitan:</p>
+                    \[ \Phi(t) = B A\cos(\omega t) \]
+                    <p>Hukum Faraday untuk \(N\) lilitan: GGL sebanding dengan laju perubahan fluks (tanda minus dari Hukum Lenz).</p>
+                    \[ \varepsilon(t) = -N\frac{d\Phi}{dt} = -N\,BA\,\frac{d}{dt}\cos(\omega t) = N B A\,\omega\sin(\omega t) \]
+                    <p>Bentuk ini sama dengan \(v(t) = V_m\sin(\omega t)\) dengan \(V_m = NBA\omega\). Terbukti bahwa kumparan yang berputar beraturan menghasilkan tegangan sinusoidal.</p>
+                  </div>
+                </details>
+
+                <h3>Kenapa AC yang menang?</h3>
+                <p>Alasan terbesarnya bukan soal generator, melainkan soal <strong>mengirim listrik jauh</strong>. Pembangkit biasanya berada jauh dari kota, dan kabel punya hambatan sehingga sebagian energi hilang menjadi panas di sepanjang jalan.</p>
+                <div class="analogi">
+                  <p><strong>Analogi.</strong> Mengalirkan air lewat pipa kecil yang panjang. Kalau airnya dialirkan dengan debit besar, gesekan di dinding pipa besar sekali. Tapi kalau tekanannya dinaikkan dan debitnya dikecilkan, jumlah air yang sampai tetap sama dengan gesekan jauh lebih kecil. Di listrik, "tekanan" adalah tegangan \(V\) dan "debit" adalah arus \(I\).</p>
+                </div>
+                <p>Daya yang dikirim \(P = VI\), dan rugi panas di kabel \(P_{rugi} = I^2R\). Contoh: mengirim 1 MW lewat kabel dengan hambatan total 10 Ω.</p>
+                <div class="overflow-x-auto">
+                  <table>
+                    <thead>
+                      <tr><th>Tegangan kirim</th><th>Arus \(I = P/V\)</th><th>Rugi kabel \(I^2R\)</th><th>Persentase hilang</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>10 kV</td><td>100 A</td><td>100 kW</td><td>10%</td></tr>
+                      <tr><td>100 kV</td><td>10 A</td><td>1 kW</td><td>0,1%</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p>Tegangan naik 10 kali, rugi turun 100 kali. Maka listrik dikirim dengan tegangan sangat tinggi, lalu diturunkan lagi sebelum masuk ke rumah. Alat yang bisa menaikkan dan menurunkan tegangan dengan efisien adalah <strong>transformator</strong>. Cara kerjanya memanfaatkan fluks magnet yang <em>berubah-ubah</em>, jadi transformator hanya bekerja pada AC. Perbandingan tegangannya mengikuti perbandingan lilitan:</p>
+                \[ \frac{V_s}{V_p} = \frac{N_s}{N_p} \]
+                <p>Sebagai gambaran jalurnya: pembangkit, trafo penaik, saluran transmisi tegangan tinggi (misalnya 150 kV atau 500 kV), trafo penurun, jaringan distribusi 20 kV, trafo di tiang listrik, lalu 220 V di rumah kita. Sekarang memang ada transmisi DC tegangan tinggi (HVDC) untuk kasus khusus seperti kabel bawah laut, tetapi jaringan listrik sehari-hari tetap AC.</p>
+
+                <!-- Fakta Menarik 1 -->
+                <aside class="fact">
+                  <p class="!mt-0 flex items-center gap-2 font-extrabold text-sky-600 dark:text-sky-400">
+                    <i data-lucide="lightbulb" class="w-5 h-5"></i> Fakta Menarik
+                  </p>
+                  <p>Mengapa listrik di Indonesia 50 Hz, sedangkan di Amerika 60 Hz? Ini bukan karena hukum fisika, melainkan sejarah persaingan industri. Di Amerika, perusahaan Westinghouse (dengan Tesla) memilih 60 Hz, sementara perusahaan AEG di Eropa memilih 50 Hz. Indonesia mewarisi standar 50 Hz dari Belanda (Eropa). Mengapa tidak diubah? Karena mengganti frekuensi nasional berarti mengganti seluruh infrastruktur dan alat elektronik di rumah. Biayanya triliunan rupiah! (Sumber: Standar IEC &amp; Sejarah Kelistrikan)</p>
+                </aside>
+              </div>
+            </section>
+
+            <!-- ================= BAB 2 ================= -->
+            <section id="sec-2" class="scroll-mt-24 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 md:p-8">
+              <h2 class="text-2xl font-extrabold">Bab 2: Anatomi Gelombang Sinusoidal</h2>
+              <div class="kt">
+                <p>Dari Bab 1 kita tahu generator menghasilkan tegangan yang naik-turun mengikuti fungsi sinus. Secara matematis:</p>
+                \[ v(t) = V_m \sin(\omega t + \theta) \]
+                <p>Biar tidak pusing, bayangkan <strong>bianglala</strong>. Tinggi penumpang dari titik tengah roda adalah tegangan \(v\) pada saat \(t\). Nah, parameter-parameternya:</p>
+                <ul>
+                  <li>\(V_m\) (<strong>Amplitudo</strong>): jari-jari bianglala, yaitu ketinggian maksimum penumpang. Satuannya volt. Ini nilai puncak tegangan.</li>
+                  <li>\(f\) (<strong>Frekuensi</strong>): berapa kali bianglala berputar penuh dalam 1 detik. Satuannya hertz (Hz). Listrik PLN: 50 Hz.</li>
+                  <li>\(T\) (<strong>Periode</strong>): lama satu putaran penuh. Hubungannya \(T = 1/f\). Untuk 50 Hz, \(T = 20\) ms.</li>
+                  <li>\(\theta\) (<strong>Sudut Fase</strong>): posisi awal penumpang saat stopwatch mulai dihitung (\(t = 0\)). Kalau \(\theta = 0^\circ\), penumpang mulai dari titik tengah, naik.</li>
+                  <li>\(\omega\) (<strong>Frekuensi sudut</strong>): kecepatan putar bianglala dalam satuan sudut (rad/s), dengan \(\omega = 2\pi f = 2\pi/T\).</li>
+                </ul>
+
+                <details class="deriv">
+                  <summary><span class="flex items-center gap-2"><i data-lucide="sigma" class="w-5 h-5"></i> Lihat Penurunan Matematis</span><i data-lucide="chevron-down" class="chev w-5 h-5 shrink-0"></i></summary>
+                  <div class="deriv-body">
+                    <p>Gelombang sinus mengulang dirinya setiap kali sudut \(\omega t\) bertambah \(2\pi\) radian (satu putaran penuh). Setelah waktu satu periode \(T\):</p>
+                    \[ \omega T = 2\pi \;\Longrightarrow\; \omega = \frac{2\pi}{T} \]
+                    <p>Karena \(T = 1/f\), maka</p>
+                    \[ \omega = 2\pi f \]
+                    <p>Contoh: \(f = 50\ \text{Hz}\) memberi \(\omega = 100\pi \approx 314\ \text{rad/s}\).</p>
+                  </div>
+                </details>
+
+                <div class="callout">
+                  <p><strong>Cara membaca grafiknya (penting!).</strong> Grafik yang ditampilkan di bawah adalah grafik <strong>Tegangan terhadap Waktu</strong>: sumbu vertikal adalah tegangan \(v\), sumbu horizontal adalah waktu (diwakili sudut \(\omega t\), dengan 360° sama dengan satu periode \(T\)).</p>
+                  <p>Saat grafik berada di atas sumbu (tegangan positif), polaritas sumber mendorong arus ke <em>satu arah</em>. Ketika grafik turun melewati nol dan masuk ke area negatif, polaritas sumber <strong>berbalik</strong>, sehingga arus mengalir ke arah <em>sebaliknya</em>. Titik saat grafik memotong sumbu hanya berarti tegangan sesaat bernilai nol, bukan berarti listrik "mati".</p>
+                </div>
+
+                <!-- ===== MINI-SIMULASI ===== -->
+                <div class="my-6 rounded-2xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 p-4 md:p-5">
+                  <p class="!mt-0 flex items-center gap-2 font-extrabold text-sky-600 dark:text-sky-400">
+                    <i data-lucide="activity" class="w-5 h-5"></i> Mini-Simulasi: Phasor &amp; Gelombang Sinus
+                  </p>
+
+                  <div class="grid grid-cols-1 sm:grid-cols-[2fr_3fr] gap-2 items-center mt-2">
+
+                    <!-- Kiri: lingkaran + phasor berputar -->
+                    <svg id="sim-circle" viewBox="0 0 260 260" class="w-full h-auto text-slate-500 dark:text-slate-400" role="img" aria-label="Lingkaran dengan panah phasor yang berputar">
+                      <defs>
+                        <marker id="sim-ph-ah" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="4" markerHeight="4" orient="auto"><path d="M0 0L10 5L0 10z" fill="#0ea5e9" /></marker>
+                      </defs>
+                      <line x1="20" y1="130" x2="240" y2="130" stroke="currentColor" stroke-width="1" opacity=".6" />
+                      <line x1="130" y1="20" x2="130" y2="240" stroke="currentColor" stroke-width="1" opacity=".6" />
+                      <circle cx="130" cy="130" r="90" fill="none" stroke="currentColor" stroke-width="1.5" opacity=".7" />
+                      <line id="sim-proj" x1="220" y1="130" x2="258" y2="130" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4 4" />
+                      <line id="sim-drop" x1="220" y1="130" x2="220" y2="130" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4 4" />
+                      <path id="sim-arc" d="" fill="none" stroke="#8b5cf6" stroke-width="2.5" />
+                      <line id="sim-phasor" x1="130" y1="130" x2="220" y2="130" stroke="#0ea5e9" stroke-width="3.5" stroke-linecap="round" marker-end="url(#sim-ph-ah)" />
+                      <text id="sim-vm-label" x="190" y="120" font-size="13" font-weight="800" fill="#0ea5e9">V<tspan dy="3" font-size="9">m</tspan></text>
+                      <text x="130" y="254" font-size="11" fill="currentColor" text-anchor="middle">Phasor: φ = ωt + θ</text>
+                    </svg>
+
+                    <!-- Kanan: gelombang sinus -->
+                    <svg id="sim-wave" viewBox="0 0 410 260" class="w-full h-auto text-slate-500 dark:text-slate-400" role="img" aria-label="Grafik tegangan terhadap waktu yang terbentuk dari putaran phasor">
+                      <defs>
+                        <marker id="sim-ax-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="8" markerHeight="8" orient="auto"><path d="M0 0L10 5L0 10z" fill="currentColor" /></marker>
+                        <marker id="sim-vm-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#10b981" /></marker>
+                        <marker id="sim-t-ah" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto"><path d="M0 0L10 5L0 10z" fill="#8b5cf6" /></marker>
+                      </defs>
+
+                      <!-- grid sudut -->
+                      <g stroke="currentColor" stroke-width="1" opacity=".18">
+                        <line x1="56" y1="40" x2="56" y2="220" />
+                        <line x1="138.5" y1="40" x2="138.5" y2="220" />
+                        <line x1="221" y1="40" x2="221" y2="220" />
+                        <line x1="303.5" y1="40" x2="303.5" y2="220" />
+                        <line x1="386" y1="40" x2="386" y2="220" />
+                      </g>
+                      <g font-size="10" fill="currentColor" text-anchor="middle">
+                        <text x="56" y="246">0°</text>
+                        <text x="138.5" y="246">180°</text>
+                        <text x="221" y="246">360°</text>
+                        <text x="303.5" y="246">540°</text>
+                        <text x="386" y="246">720°</text>
+                      </g>
+
+                      <!-- garis bantu Vm -->
+                      <line x1="30" y1="40" x2="386" y2="40" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" opacity=".35" />
+                      <line x1="30" y1="220" x2="386" y2="220" stroke="currentColor" stroke-width="1" stroke-dasharray="4 4" opacity=".35" />
+
+                      <!-- panah vertikal Vm -->
+                      <line x1="30" y1="130" x2="30" y2="44" stroke="#10b981" stroke-width="2" marker-end="url(#sim-vm-ah)" />
+                      <text x="4" y="92" font-size="13" font-weight="800" fill="#10b981">V<tspan dy="3" font-size="9">m</tspan></text>
+
+                      <!-- sumbu -->
+                      <line x1="44" y1="130" x2="398" y2="130" stroke="currentColor" stroke-width="1.3" marker-end="url(#sim-ax-ah)" />
+                      <line x1="56" y1="232" x2="56" y2="14" stroke="currentColor" stroke-width="1.3" marker-end="url(#sim-ax-ah)" />
+                      <text x="63" y="18" font-size="12" fill="currentColor" font-style="italic">v</text>
+                      <text x="404" y="150" font-size="12" fill="currentColor" font-style="italic" text-anchor="end">ωt</text>
+
+                      <!-- gelombang -->
+                      <path id="sim-wave-faint" d="" fill="none" stroke="#0ea5e9" stroke-width="2" opacity=".28" stroke-dasharray="3 3" />
+                      <path id="sim-wave-solid" d="" fill="none" stroke="#0ea5e9" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round" />
+
+                      <!-- panah horizontal periode T (puncak ke puncak) -->
+                      <line id="sim-t-g1" x1="0" y1="24" x2="0" y2="130" stroke="#8b5cf6" stroke-width="1" stroke-dasharray="2 4" opacity=".6" />
+                      <line id="sim-t-g2" x1="0" y1="24" x2="0" y2="130" stroke="#8b5cf6" stroke-width="1" stroke-dasharray="2 4" opacity=".6" />
+                      <line id="sim-t-l" x1="0" y1="28" x2="0" y2="28" stroke="#8b5cf6" stroke-width="2" marker-end="url(#sim-t-ah)" />
+                      <line id="sim-t-r" x1="0" y1="28" x2="0" y2="28" stroke="#8b5cf6" stroke-width="2" marker-end="url(#sim-t-ah)" />
+                      <text id="sim-t-label" x="0" y="20" font-size="13" font-weight="800" fill="#8b5cf6" text-anchor="middle">T</text>
+
+                      <!-- titik yang bergerak -->
+                      <line id="sim-dot-guide" x1="56" y1="130" x2="56" y2="130" stroke="#f59e0b" stroke-width="1.5" stroke-dasharray="4 4" />
+                      <circle id="sim-dot" cx="56" cy="130" r="6" fill="#f59e0b" />
+                    </svg>
+                  </div>
+
+                  <!-- Kontrol -->
+                  <div class="mt-4 flex flex-col sm:flex-row sm:items-center gap-4">
+                    <button id="sim-play" type="button" aria-label="Jeda animasi"
+                      class="inline-flex items-center justify-center gap-2 min-w-[7.5rem] bg-sky-500 text-white rounded-full px-5 py-2 font-bold shadow-md shadow-sky-500/30 hover:scale-105 transition-transform focus:outline-none focus-visible:ring-4 focus-visible:ring-sky-300/60">
+                      <span id="sim-ico-pause"><i data-lucide="pause" class="w-4 h-4"></i></span>
+                      <span id="sim-ico-play" class="hidden"><i data-lucide="play" class="w-4 h-4"></i></span>
+                      <span id="sim-play-text">Pause</span>
+                    </button>
+
+                    <div class="flex-1">
+                      <label for="sim-theta" class="flex items-center justify-between text-sm font-bold mb-1">
+                        <span>Sudut fase \(\theta\)</span>
+                        <span id="sim-theta-out" class="text-sky-600 dark:text-sky-400">0°</span>
+                      </label>
+                      <input id="sim-theta" type="range" min="0" max="360" step="1" value="0" class="w-full accent-sky-500 cursor-pointer" />
+                      <div class="flex justify-between text-xs text-slate-400"><span>0°</span><span>180°</span><span>360°</span></div>
+                    </div>
+                  </div>
+
+                  <!-- Readout -->
+                  <div class="mt-3 grid grid-cols-3 gap-2 text-center text-sm">
+                    <div class="rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 py-2">
+                      <div class="text-xs text-slate-400">ωt</div><div id="sim-wt-out" class="font-extrabold">0°</div>
+                    </div>
+                    <div class="rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 py-2">
+                      <div class="text-xs text-slate-400">Sudut phasor φ</div><div id="sim-phi-out" class="font-extrabold">0°</div>
+                    </div>
+                    <div class="rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 py-2">
+                      <div class="text-xs text-slate-400">Tegangan v</div><div id="sim-v-out" class="font-extrabold">+0,00 Vm</div>
+                    </div>
+                  </div>
+
+                  <p class="mt-3 text-sm text-slate-500 dark:text-slate-400">Kecepatan putar sengaja diperlambat agar mudah diamati. Titik kuning di lingkaran dan di grafik selalu sama tingginya: gelombang sinus adalah "bayangan" dari putaran phasor.</p>
+                </div>
+
+                <h3>Coba eksperimen ini</h3>
+                <ul>
+                  <li>Tekan <strong>Pause</strong>, lalu geser \(\theta\) ke \(90^\circ\). Gelombang kini dimulai dari puncak, persis seperti gelombang cosinus.</li>
+                  <li>Geser \(\theta\) ke \(180^\circ\). Gelombang terbalik: bagian yang tadinya positif menjadi negatif.</li>
+                  <li>Geser \(\theta\) ke \(360^\circ\). Hasilnya sama persis dengan \(\theta = 0^\circ\), karena satu putaran penuh kembali ke posisi semula.</li>
+                  <li>Perhatikan panah ungu <strong>T</strong> (dari puncak ke puncak). Jaraknya selalu 360°, berapa pun \(\theta\)-nya. Hanya posisinya yang bergeser.</li>
+                  <li>Panah hijau <strong>\(V_m\)</strong> menunjukkan tinggi maksimum gelombang, sama dengan panjang panah phasor di lingkaran.</li>
+                </ul>
+              </div>
+            </section>
+
+            <!-- ================= BAB 3 ================= -->
+            <section id="sec-3" class="scroll-mt-24 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 md:p-8">
+              <h2 class="text-2xl font-extrabold">Bab 3: Misteri Angka 220V (Nilai RMS &amp; Rata-rata)</h2>
+              <div class="kt">
+                <h3>Kenapa rata-rata satu periode sama dengan nol?</h3>
+                <p>Coba jalan 5 langkah ke depan, lalu 5 langkah ke belakang. Posisi rata-ratamu? Nol, padahal kamu tetap capek. Gelombang sinus begitu juga: separuh periode positif, separuh periode negatif, dan keduanya sama besar sehingga <strong>saling menghilangkan</strong>:</p>
+                \[ V_{avg} = 0 \quad\text{(untuk satu periode penuh)} \]
+                <p>Padahal listrik AC jelas bisa memanaskan setrika dan menyalakan lampu. Jadi nilai rata-rata satu periode tidak berguna untuk menyatakan "seberapa kuat" sebuah sumber AC.</p>
+
+                <h3>Kenapa butuh nilai RMS?</h3>
+                <div class="analogi">
+                  <p><strong>Analogi.</strong> Ada dua ketel yang sama. Ketel pertama dipanaskan baterai (DC), ketel kedua dipanaskan listrik PLN (AC). Berapa tegangan baterai yang membuat ketel pertama sama panasnya dengan ketel kedua? Jawabannya itulah <strong>nilai efektif</strong> atau <strong>RMS</strong> dari tegangan PLN.</p>
+                </div>
+                <p>Namanya <em>Root Mean Square</em> karena caranya: <strong>kuadratkan</strong> tegangan (supaya yang negatif jadi positif), cari <strong>rata-ratanya</strong> (<em>mean</em>), lalu ambil <strong>akarnya</strong> (<em>root</em>). Untuk gelombang sinus, hasilnya sederhana:</p>
+                \[ V_{rms} = \frac{V_m}{\sqrt{2}} \approx 0{,}707\,V_m \qquad\Longleftrightarrow\qquad V_m = \sqrt{2}\,V_{rms} \]
+
+                <h3>Kenapa PLN 220V, tapi komponen harus tahan 311V?</h3>
+                <div class="analogi">
+                  <p><strong>Analogi.</strong> Orang bilang "tinggi ombak hari ini 1 meter" sebagai nilai efektifnya. Padahal puncak ombak tertingginya bisa 1,4 meter. Kapal harus dirancang tahan terhadap puncaknya, bukan cuma tinggi efektifnya.</p>
+                </div>
+                <p>Begitu juga listrik rumah. Angka 220 V adalah RMS. Puncaknya:</p>
+                \[ V_m = 220\sqrt{2} \approx 311\ \text{V} \]
+
+                <!-- Fakta Menarik 2 -->
+                <aside class="fact">
+                  <p class="!mt-0 flex items-center gap-2 font-extrabold text-sky-600 dark:text-sky-400">
+                    <i data-lucide="lightbulb" class="w-5 h-5"></i> Fakta Menarik
+                  </p>
+                  <p>Mengapa listrik di rumah kita tertulis 220V, tapi komponen di dalam charger HP harus tahan hingga 311V? Karena 220V itu adalah nilai RMS (nilai efektif), sedangkan nilai puncaknya (Vm) adalah 220 x √2 = 311V. Jika komponen charger hanya didesain untuk 220V, ia akan meledak saat tegangan mencapai puncaknya! (Sumber: Sadiku, Bab 11).</p>
+                </aside>
+
+                <details class="deriv">
+                  <summary><span class="flex items-center gap-2"><i data-lucide="sigma" class="w-5 h-5"></i> Lihat Penurunan Matematis</span><i data-lucide="chevron-down" class="chev w-5 h-5 shrink-0"></i></summary>
+                  <div class="deriv-body">
+                    <h3>Penurunan \(V_{rms}\)</h3>
+                    <p>Daya rata-rata pada resistor \(R\) selama satu periode: \(P = \dfrac{1}{T}\int_0^T \dfrac{v^2(t)}{R}\,dt\). Sumber DC setara memberi daya \(P = V_{rms}^2/R\). Menyamakan keduanya:</p>
+                    \[ V_{rms} = \sqrt{\frac{1}{T}\int_0^T v^2(t)\,dt} \]
+                    <p>Ambil \(\theta = 0\) (hasilnya tidak bergantung \(\theta\) karena integral mencakup satu periode penuh). Dengan identitas \(\sin^2 x = \tfrac{1}{2}(1 - \cos 2x)\):</p>
+                    \[ v^2(t) = V_m^2\sin^2(\omega t) = \frac{V_m^2}{2}\bigl[1 - \cos(2\omega t)\bigr] \]
+                    \[ \frac{1}{T}\int_0^T v^2\,dt = \frac{V_m^2}{2T}\left[t - \frac{\sin 2\omega t}{2\omega}\right]_0^T = \frac{V_m^2}{2} \]
+                    <p>karena \(\sin(2\omega T) = \sin 4\pi = 0\). Jadi</p>
+                    \[ V_{rms} = \sqrt{\frac{V_m^2}{2}} = \frac{V_m}{\sqrt{2}} \]
+
+                    <h3>Kenapa rata-rata satu periode nol, dan berapa rata-rata setengah periode?</h3>
+                    \[ \frac{1}{T}\int_0^T V_m\sin(\omega t)\,dt = \frac{V_m}{\omega T}\bigl[-\cos\omega t\bigr]_0^T = \frac{V_m}{\omega T}\bigl(-\cos 2\pi + \cos 0\bigr) = 0 \]
+                    <p>Untuk setengah periode saja:</p>
+                    \[
+                    \begin{aligned}
+                    V_{avg} &= \frac{2}{T}\int_0^{T/2} V_m\sin(\omega t)\,dt = \frac{2V_m}{T}\cdot\frac{1-\cos\pi}{\omega} = \frac{4V_m}{\omega T} \\
+                    &= \frac{4V_m}{2\pi} = \frac{2V_m}{\pi} \approx 0{,}637\,V_m
+                    \end{aligned}
+                    \]
+                  </div>
+                </details>
+              </div>
+            </section>
+
+            <!-- ================= BAB 4 ================= -->
+            <section id="sec-4" class="scroll-mt-24 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 md:p-8">
+              <h2 class="text-2xl font-extrabold">Bab 4: Trik Analisis AC (Phasor &amp; Bilangan Kompleks)</h2>
+              <div class="kt">
+                <h3>Kenapa kita butuh Phasor?</h3>
+                <p>Menjumlahkan dua gelombang sinus yang fasenya berbeda memakai trigonometri itu melelahkan, apalagi kalau rangkaiannya punya banyak komponen. Matematika sinus memang sulit dihitung.</p>
+                <div class="analogi">
+                  <p><strong>Analogi.</strong> Untuk menunjukkan posisi sebuah kapal, kamu tidak perlu mencatat koordinatnya setiap detik. Cukup catat <em>jarak</em> dan <em>arah</em> dari pelabuhan. Phasor bekerja serupa: karena semua gelombang di satu rangkaian berfrekuensi sama, yang membedakan mereka cuma <strong>besar (amplitudo)</strong> dan <strong>sudut (fase)</strong>. Jadi cukup catat dua hal itu saja.</p>
+                </div>
+                <p>Untuk mencatat "besar dan sudut" sekaligus, kita pinjam <strong>bilangan kompleks</strong>.</p>
+
+                <h3>Bilangan kompleks</h3>
+                <p>Satuan imajiner ditulis \(j = \sqrt{-1}\) (di elektronika dipakai \(j\), bukan \(i\), agar tidak tertukar dengan simbol arus). Bayangkan sebuah peta: sumbu horizontal adalah "ke timur" (bagian <em>real</em>), sumbu vertikal adalah "ke utara" (bagian <em>imajiner</em>). Sebuah titik di peta ditulis:</p>
+                \[ \mathbf{Z} = a + jb \]
+                <p>Di rangkaian listrik, <strong>\(a\) adalah Resistansi (R)</strong> dan <strong>\(b\) adalah Reaktansi (\(X_L - X_C\))</strong>. Jadi:</p>
+                \[ \mathbf{Z} = \underbrace{R}_{a} + j\underbrace{(X_L - X_C)}_{b} \]
+                <p>(\(X_L\) dan \(X_C\) akan kita kenalan di Bab 5.) Titik yang sama bisa ditulis dengan "jarak dan arah", yaitu <strong>bentuk polar</strong>:</p>
+                \[ \mathbf{Z} = r\angle\varphi, \qquad r = \sqrt{a^2 + b^2}, \qquad \varphi = \tan^{-1}\frac{b}{a} \]
+                <p>Kalau \(a \lt 0\), tambahkan \(180^\circ\) pada hasil \(\tan^{-1}(b/a)\) supaya sudutnya berada di kuadran yang benar. Aturan praktis: <em>tambah/kurang</em> lebih mudah di bentuk rektangular (\(a + jb\)), sedangkan <em>kali/bagi</em> lebih mudah di bentuk polar:</p>
+                \[ r_1\angle\varphi_1 \cdot r_2\angle\varphi_2 = r_1 r_2\angle(\varphi_1+\varphi_2), \qquad \frac{r_1\angle\varphi_1}{r_2\angle\varphi_2} = \frac{r_1}{r_2}\angle(\varphi_1-\varphi_2) \]
+
+                <h3>Phasor</h3>
+                <p><strong>Phasor</strong> adalah bilangan kompleks dalam bentuk polar yang mewakili sebuah gelombang sinus: panjangnya adalah amplitudo, sudutnya adalah sudut fase. Konvensinya memakai acuan <strong>cosinus</strong>:</p>
+                \[ v(t) = V_m\cos(\omega t + \theta) \;\longleftrightarrow\; \mathbf{V} = V_m\angle\theta \]
+                <p>Kalau gelombangnya berbentuk sinus, ubah dulu ke cosinus dengan \(\sin x = \cos(x - 90^\circ)\).</p>
+                <div class="callout">
+                  <p><strong>Contoh.</strong> \(v(t) = 120\sin(314t + 20^\circ)\ \text{V}\). Ubah ke cosinus: \(120\cos(314t + 20^\circ - 90^\circ)\). Maka</p>
+                  \[ \mathbf{V} = 120\angle{-70^\circ}\ \text{V} \]
+                </div>
+
+                <details class="deriv">
+                  <summary><span class="flex items-center gap-2"><i data-lucide="sigma" class="w-5 h-5"></i> Lihat Penurunan Matematis</span><i data-lucide="chevron-down" class="chev w-5 h-5 shrink-0"></i></summary>
+                  <div class="deriv-body">
+                    <h3>1. Identitas Euler (deret Maclaurin)</h3>
+                    <p>Deret Maclaurin untuk \(e^{x}\) dengan \(x = j\varphi\), lalu kelompokkan suku real dan imajiner (ingat \(j^2 = -1\), \(j^3 = -j\), \(j^4 = 1\)):</p>
+                    \[ e^{j\varphi} = 1 + j\varphi + \frac{(j\varphi)^2}{2!} + \frac{(j\varphi)^3}{3!} + \cdots = \underbrace{\left(1 - \frac{\varphi^2}{2!} + \frac{\varphi^4}{4!} - \cdots\right)}_{\cos\varphi} + j\underbrace{\left(\varphi - \frac{\varphi^3}{3!} + \frac{\varphi^5}{5!} - \cdots\right)}_{\sin\varphi} \]
+                    \[ \Longrightarrow\quad e^{j\varphi} = \cos\varphi + j\sin\varphi \]
+
+                    <h3>2. Dari bentuk rektangular ke polar</h3>
+                    \[ \mathbf{Z} = a + jb = r\cos\varphi + j\,r\sin\varphi = r(\cos\varphi + j\sin\varphi) = r\,e^{j\varphi} = r\angle\varphi \]
+
+                    <h3>3. Dari gelombang ke phasor</h3>
+                    <p>Karena \(\cos\phi = \operatorname{Re}\{e^{j\phi}\}\):</p>
+                    \[ v(t) = V_m\cos(\omega t+\theta) = \operatorname{Re}\{V_m e^{j(\omega t+\theta)}\} = \operatorname{Re}\{\underbrace{V_m e^{j\theta}}_{\mathbf{V}}\,e^{j\omega t}\} \]
+                    <p>Faktor \(e^{j\omega t}\) sama untuk semua besaran dalam rangkaian sehingga tidak perlu dibawa-bawa. Yang tersisa adalah phasor:</p>
+                    \[ \mathbf{V} = V_m e^{j\theta} = V_m\angle\theta \]
+                  </div>
+                </details>
+              </div>
+            </section>
+
+            <!-- ================= BAB 5 ================= -->
+            <section id="sec-5" class="scroll-mt-24 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 md:p-8">
+              <h2 class="text-2xl font-extrabold">Bab 5: Karakter 3 Komponen (R, L, C)</h2>
+              <div class="kt">
+                <p>Di rangkaian DC, hanya resistor yang "berkarakter". Di rangkaian AC, ada tiga tokoh dengan kepribadian berbeda. Perbedaan utamanya terlihat pada hubungan <strong>fase</strong> antara tegangan \(v\) dan arus \(i\), serta bagaimana mereka bereaksi terhadap frekuensi. Kita pakai satu istilah baru: <strong>reaktansi</strong> \(X\), yaitu "perlawanan" yang muncul dari induktor dan kapasitor (satuan ohm, sama seperti hambatan).</p>
+
+                <h3>Resistor (R): si lurus</h3>
+                <div class="analogi">
+                  <p><strong>Analogi.</strong> Pipa lurus tanpa pegas dan tanpa tandon. Begitu air didorong, saat itu juga air mengalir. Tidak ada tunda-menunda.</p>
+                </div>
+                <p>Arus dan tegangan pada resistor <strong>sefase</strong>: naik bersama, turun bersama, dan nilainya tidak bergantung pada frekuensi.</p>
+                \[ \mathbf{V} = R\,\mathbf{I}, \qquad \mathbf{Z}_R = R \]
+
+                <h3>Induktor (L): si berat yang malas mulai</h3>
+                <div class="analogi">
+                  <p><strong>Analogi.</strong> Bola bowling di lantai. Kamu mendorongnya (tegangan) lebih dulu, tapi bola baru bergerak (arus) belakangan karena inersia. Induktor melawan <em>perubahan</em> arus.</p>
+                </div>
+                <p>Pada induktor, <strong>tegangan mendahului arus 90°</strong>. Ingat singkatan <strong>ELI</strong>: <em>E</em> (tegangan) mendahului <em>I</em> (arus) pada <em>L</em>. Makin cepat arus dipaksa berubah (frekuensi tinggi), makin "seret", sehingga reaktansinya naik bersama frekuensi:</p>
+                \[ X_L = \omega L = 2\pi f L, \qquad \mathbf{Z}_L = jX_L = j\omega L \]
+                <details class="deriv">
+                  <summary><span class="flex items-center gap-2"><i data-lucide="sigma" class="w-5 h-5"></i> Lihat Penurunan Matematis</span><i data-lucide="chevron-down" class="chev w-5 h-5 shrink-0"></i></summary>
+                  <div class="deriv-body">
+                    <p>Tegangan induktor \(v = L\,\dfrac{di}{dt}\). Untuk \(i(t) = I_m\cos(\omega t + \theta_i)\):</p>
+                    \[ v = -\omega L I_m\sin(\omega t + \theta_i) = \omega L I_m\cos(\omega t + \theta_i + 90^\circ) \]
+                    <p>karena \(-\sin x = \cos(x + 90^\circ)\). Dalam bentuk phasor:</p>
+                    \[ \mathbf{V} = \omega L I_m\angle(\theta_i + 90^\circ) = (\omega L\angle 90^\circ)(I_m\angle\theta_i) = j\omega L\,\mathbf{I} \]
+                    <p>Fase \(\mathbf{V}\) lebih besar \(90^\circ\) dari \(\mathbf{I}\): tegangan mendahului arus (ELI).</p>
+                  </div>
+                </details>
+
+                <h3>Kapasitor (C): si penampung</h3>
+                <div class="analogi">
+                  <p><strong>Analogi.</strong> Ember kosong yang diisi air. Di awal, air (arus) mengalir deras, tapi permukaan air (tegangan) masih rendah. Setelah ember hampir penuh, arus mengecil sementara tegangan sudah tinggi. Arus selalu "lebih dulu" dari tegangan.</p>
+                </div>
+                <p>Pada kapasitor, <strong>arus mendahului tegangan 90°</strong>. Ingat <strong>ICE</strong>: <em>I</em> (arus) mendahului <em>E</em> (tegangan) pada <em>C</em>. Makin tinggi frekuensi, makin mudah arus lewat, sehingga reaktansinya <em>turun</em> bila frekuensi naik. Pada DC (\(\omega = 0\)) kapasitor ideal bersifat seperti rangkaian terbuka.</p>
+                \[ X_C = \frac{1}{\omega C} = \frac{1}{2\pi f C}, \qquad \mathbf{Z}_C = -jX_C = \frac{-j}{\omega C} \]
+                <details class="deriv">
+                  <summary><span class="flex items-center gap-2"><i data-lucide="sigma" class="w-5 h-5"></i> Lihat Penurunan Matematis</span><i data-lucide="chevron-down" class="chev w-5 h-5 shrink-0"></i></summary>
+                  <div class="deriv-body">
+                    <p>Arus kapasitor \(i = C\,\dfrac{dv}{dt}\). Untuk \(v(t) = V_m\cos(\omega t + \theta_v)\):</p>
+                    \[ i = -\omega C V_m\sin(\omega t + \theta_v) = \omega C V_m\cos(\omega t + \theta_v + 90^\circ) \]
+                    \[ \mathbf{I} = \omega C V_m\angle(\theta_v + 90^\circ) = j\omega C\,\mathbf{V} \]
+                    <p>Fase \(\mathbf{I}\) lebih besar \(90^\circ\) dari \(\mathbf{V}\): arus mendahului tegangan (ICE). Impedansinya:</p>
+                    \[ \mathbf{Z}_C = \frac{\mathbf{V}}{\mathbf{I}} = \frac{1}{j\omega C} = \frac{-j}{\omega C} \]
+                    <p>karena \(1/j = -j\).</p>
+                  </div>
+                </details>
+
+                <h3>Tabel ringkasan</h3>
+                <div class="overflow-x-auto">
+                  <table>
+                    <thead>
+                      <tr><th>Komponen</th><th>Hubungan fase</th><th>Reaktansi</th><th>Impedansi \(\mathbf{Z}\)</th><th>Jika frekuensi naik</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr><td>Resistor (R)</td><td>Sefase</td><td>-</td><td>\(R\)</td><td>Tidak berubah</td></tr>
+                      <tr><td>Induktor (L)</td><td>Tegangan mendahului arus 90° (ELI)</td><td>\(X_L = \omega L\)</td><td>\(j\omega L\)</td><td>\(X_L\) naik</td></tr>
+                      <tr><td>Kapasitor (C)</td><td>Arus mendahului tegangan 90° (ICE)</td><td>\(X_C = 1/(\omega C)\)</td><td>\(\dfrac{-j}{\omega C}\)</td><td>\(X_C\) turun</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p>Perhatikan tanda: dalam \(\mathbf{Z} = R + j(X_L - X_C)\), reaktansi kapasitif masuk dengan tanda <em>minus</em>. Induktor dan kapasitor bekerja saling berlawanan, dan itulah yang menimbulkan peristiwa menarik di Bab 7.</p>
+
+                <!-- Fakta Menarik 3 -->
+                <aside class="fact">
+                  <p class="!mt-0 flex items-center gap-2 font-extrabold text-sky-600 dark:text-sky-400">
+                    <i data-lucide="lightbulb" class="w-5 h-5"></i> Fakta Menarik
+                  </p>
+                  <p>Tahukah kamu, dulu Thomas Edison (pendukung DC) dan Nikola Tesla (pendukung AC) sempat berperang besar (War of the Currents). Edison dan perusahaannya gencar mengampanyekan bahaya AC, bahkan melakukan demonstrasi penyetruman hewan (termasuk gajah Topsy pada 1903) untuk menakut-nakuti publik. Meski kampanye hitam itu gencar, sejarah membuktikan bahwa arus AC-lah yang akhirnya menerangi dunia hingga saat ini. (Sumber: Jill Jonnes, 'Empires of Light', 2003 &amp; IEEE History Center).</p>
+                </aside>
+              </div>
+            </section>
+
+            <!-- ================= BAB 6 ================= -->
+            <section id="sec-6" class="scroll-mt-24 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 md:p-8">
+              <h2 class="text-2xl font-extrabold">Bab 6: Menggabungkan Hambatan (Impedansi &amp; Admittansi)</h2>
+              <div class="kt">
+                <p>Sekarang tiga tokoh tadi kita kumpulkan dalam satu rangkaian. Seperti pada DC, ada dua cara menyambungnya: <strong>seri</strong> dan <strong>paralel</strong>. Dan seperti pada DC, ada alat hitung yang cocok untuk masing-masing.</p>
+
+                <h3>Impedansi (Z): untuk rangkaian seri</h3>
+                <p><strong>Impedansi</strong> adalah "hambatan" total pada rangkaian AC (satuan ohm). Bedanya dengan hambatan DC, impedansi punya <em>besar</em> dan <em>sudut</em>. Pada rangkaian <strong>seri</strong>, impedansi komponen-komponen tinggal dijumlahkan:</p>
+                \[ \mathbf{Z} = R + j\left(\omega L - \frac{1}{\omega C}\right) = R + j(X_L - X_C) \]
+                <p>Besar dan sudutnya mengikuti Pythagoras pada segitiga berikut.</p>
+
+                <!-- Gambar SVG: Segitiga Impedansi -->
+                <figure class="my-6 rounded-xl border border-slate-200 dark:border-slate-700 bg-slate-50 dark:bg-slate-900/50 p-3">
+                  <svg viewBox="0 0 400 230" class="w-full h-auto max-w-[460px] mx-auto text-slate-600 dark:text-slate-300" role="img" aria-label="Segitiga impedansi dengan alas R, tinggi X dan sisi miring Z">
+                    <polygon points="50,180 270,180 270,70" fill="rgba(14,165,233,.10)" stroke="currentColor" stroke-width="2" stroke-linejoin="round" />
+                    <!-- alas R -->
+                    <line x1="50" y1="180" x2="270" y2="180" stroke="#0ea5e9" stroke-width="4" stroke-linecap="round" />
+                    <!-- tinggi X -->
+                    <line x1="270" y1="180" x2="270" y2="70" stroke="#f59e0b" stroke-width="4" stroke-linecap="round" />
+                    <!-- sisi miring Z -->
+                    <line x1="50" y1="180" x2="270" y2="70" stroke="#10b981" stroke-width="4" stroke-linecap="round" />
+                    <!-- siku-siku -->
+                    <polyline points="256,180 256,166 270,166" fill="none" stroke="currentColor" stroke-width="1.5" />
+                    <!-- sudut phi -->
+                    <path d="M 90 180 A 40 40 0 0 0 85.8 162.1" fill="none" stroke="#8b5cf6" stroke-width="2.5" />
+                    <text x="100" y="172" font-size="14" font-weight="800" fill="#8b5cf6">φ</text>
+                    <!-- label -->
+                    <text x="160" y="204" font-size="14" font-weight="800" fill="#0ea5e9" text-anchor="middle">R (resistansi)</text>
+                    <text x="284" y="130" font-size="13" font-weight="800" fill="#f59e0b">X = X<tspan dy="3" font-size="9">L</tspan><tspan dy="-3"> − X</tspan><tspan dy="3" font-size="9">C</tspan></text>
+                    <text x="284" y="146" font-size="11" fill="currentColor">(reaktansi)</text>
+                    <text x="148" y="108" font-size="14" font-weight="800" fill="#10b981" text-anchor="end">|Z| (impedansi)</text>
+                  </svg>
+                </figure>
+
+                \[ |\mathbf{Z}| = \sqrt{R^2 + (X_L - X_C)^2}, \qquad \varphi = \tan^{-1}\frac{X_L - X_C}{R} \]
+                <ul>
+                  <li>Jika \(X_L \gt X_C\): \(\varphi \gt 0\), rangkaian bersifat <strong>induktif</strong> (tegangan mendahului arus).</li>
+                  <li>Jika \(X_C \gt X_L\): \(\varphi \lt 0\), rangkaian bersifat <strong>kapasitif</strong> (arus mendahului tegangan).</li>
+                  <li>Jika \(X_L = X_C\): \(\varphi = 0\), rangkaian bersifat <strong>resistif murni</strong> (ini resonansi, Bab 7).</li>
+                </ul>
+
+                <h3>Admittansi (Y): untuk rangkaian paralel</h3>
+                <div class="analogi">
+                  <p><strong>Analogi.</strong> Jalan raya. Kalau kamu membuka dua jalur paralel, kendaraan makin mudah lewat, jadi "kemudahan lewat" dari tiap jalur <em>dijumlahkan</em>. Pada rangkaian seri kita menjumlahkan hambatan, pada paralel kita menjumlahkan <em>kemudahan</em>.</p>
+                </div>
+                <p><strong>Admittansi</strong> adalah kebalikan impedansi, ukuran seberapa mudah arus mengalir (satuan siemens, S):</p>
+                \[ \mathbf{Y} = \frac{1}{\mathbf{Z}} = G + jB \]
+                <p>dengan \(G\) <strong>konduktansi</strong> (bagian real) dan \(B\) <strong>suseptansi</strong> (bagian imajiner). Pada rangkaian paralel, admittansi cabang-cabangnya dijumlahkan:</p>
+                \[ \mathbf{Y}_{total} = \mathbf{Y}_1 + \mathbf{Y}_2 + \cdots \]
+                <p>Untuk R, L, C paralel:</p>
+                \[ \mathbf{Y} = \frac{1}{R} + j\left(\omega C - \frac{1}{\omega L}\right) \]
+
+                <details class="deriv">
+                  <summary><span class="flex items-center gap-2"><i data-lucide="sigma" class="w-5 h-5"></i> Lihat Penurunan Matematis</span><i data-lucide="chevron-down" class="chev w-5 h-5 shrink-0"></i></summary>
+                  <div class="deriv-body">
+                    <h3>Impedansi seri (Hukum Tegangan Kirchhoff)</h3>
+                    <p>Pada rangkaian seri, arus \(\mathbf{I}\) sama untuk semua komponen dan tegangan sumber adalah jumlah tegangan komponen:</p>
+                    \[ \mathbf{V} = \mathbf{V}_R + \mathbf{V}_L + \mathbf{V}_C = \mathbf{I}\left(R + j\omega L + \frac{1}{j\omega C}\right) = \mathbf{I}\left[R + j\left(\omega L - \frac{1}{\omega C}\right)\right] \]
+                    <p>karena \(1/j = -j\). Maka \(\mathbf{Z} = \mathbf{V}/\mathbf{I} = R + j(X_L - X_C)\). Besar dan sudutnya dari bentuk polar bilangan kompleks (Bab 4): \(|\mathbf{Z}| = \sqrt{R^2 + X^2}\) dan \(\varphi = \tan^{-1}(X/R)\).</p>
+
+                    <h3>Admittansi paralel (Hukum Arus Kirchhoff)</h3>
+                    <p>Pada rangkaian paralel, tegangan \(\mathbf{V}\) sama dan arus sumber adalah jumlah arus cabang:</p>
+                    \[ \mathbf{I} = \mathbf{I}_R + \mathbf{I}_L + \mathbf{I}_C = \mathbf{V}\left(\frac{1}{R} + \frac{1}{j\omega L} + j\omega C\right) = \mathbf{V}\left[\frac{1}{R} + j\left(\omega C - \frac{1}{\omega L}\right)\right] \]
+                    <p>Maka \(\mathbf{Y} = \mathbf{I}/\mathbf{V}\) sama dengan bentuk di atas, dengan \(G = 1/R\) dan \(B = \omega C - 1/(\omega L)\).</p>
+
+                    <h3>Dari impedansi umum ke admittansi</h3>
+                    \[ \mathbf{Y} = \frac{1}{R + jX} = \frac{R - jX}{(R + jX)(R - jX)} = \frac{R - jX}{R^2 + X^2} \;\Longrightarrow\; G = \frac{R}{R^2+X^2},\; B = \frac{-X}{R^2+X^2} \]
+                  </div>
+                </details>
+              </div>
+            </section>
+
+            <!-- ================= BAB 7 ================= -->
+            <section id="sec-7" class="scroll-mt-24 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 md:p-8">
+              <h2 class="text-2xl font-extrabold">Bab 7: Fenomena Resonansi &amp; Daya Listrik</h2>
+              <div class="kt">
+                <h3>Resonansi: saat L dan C saling menetralkan</h3>
+                <div class="analogi">
+                  <p><strong>Analogi.</strong> Mendorong anak di ayunan. Kalau kamu mendorong tepat sesuai irama alami ayunan, ayunan makin tinggi dengan tenaga kecil. Kalau iramanya meleset, ayunan nyaris tidak bergerak. Rangkaian RLC juga punya "irama alami" sendiri.</p>
+                </div>
+                <p>Di rangkaian seri RLC, induktor menambah reaktansi \(+X_L\) sedangkan kapasitor \(-X_C\). Pada frekuensi tertentu keduanya sama besar dan saling meniadakan:</p>
+                \[ X_L = X_C \;\Longrightarrow\; \omega_0 = \frac{1}{\sqrt{LC}}, \qquad f_0 = \frac{1}{2\pi\sqrt{LC}} \]
+                <p>Saat itulah terjadi <strong>resonansi</strong>:</p>
+                <ul>
+                  <li>Impedansi <strong>minimum</strong>, \(\mathbf{Z} = R\) (hanya tersisa resistor).</li>
+                  <li>Arus <strong>maksimum</strong>, \(I = V/R\).</li>
+                  <li>Fase \(\varphi = 0\): tegangan dan arus sefase.</li>
+                </ul>
+
+                <h3>Faktor Kualitas (Q-Factor)</h3>
+                <p>Seberapa "tajam" resonansinya? Ukurannya adalah <strong>faktor kualitas</strong>, ditulis \(Q_f\) di sini agar tidak tertukar dengan daya reaktif \(Q\) di bawah:</p>
+                \[ Q_f = \frac{\omega_0 L}{R} = \frac{1}{R}\sqrt{\frac{L}{C}}, \qquad \text{lebar pita } B = \frac{f_0}{Q_f} \]
+                <div class="analogi">
+                  <p><strong>Analogi.</strong> Lonceng logam dan bantal. Lonceng (Q tinggi) berdenting lama dan nadanya sangat spesifik. Bantal (Q rendah) meredam cepat dan tidak punya "nada" khusus. Rangkaian dengan Q tinggi responsnya sempit dan tajam di sekitar \(f_0\).</p>
+                </div>
+                <p>Satu hal yang perlu diwaspadai: pada resonansi seri, tegangan di induktor dan kapasitor dapat mencapai \(Q_f\) kali tegangan sumber, jauh lebih besar dari sumbernya sendiri!</p>
+
+                <details class="deriv">
+                  <summary><span class="flex items-center gap-2"><i data-lucide="sigma" class="w-5 h-5"></i> Lihat Penurunan Matematis</span><i data-lucide="chevron-down" class="chev w-5 h-5 shrink-0"></i></summary>
+                  <div class="deriv-body">
+                    <p>Syarat resonansi \(X_L = X_C\):</p>
+                    \[ \omega_0 L = \frac{1}{\omega_0 C} \;\Longrightarrow\; \omega_0^2 = \frac{1}{LC} \;\Longrightarrow\; \omega_0 = \frac{1}{\sqrt{LC}} \]
+                    <p>Faktor kualitas didefinisikan \(Q_f = X_L/R\) saat resonansi. Substitusi \(\omega_0 = 1/\sqrt{LC}\):</p>
+                    \[ \omega_0 L = \frac{L}{\sqrt{LC}} = \sqrt{\frac{L}{C}} \;\Longrightarrow\; Q_f = \frac{1}{R}\sqrt{\frac{L}{C}} \]
+                    <p>Tegangan di induktor saat resonansi, dengan \(I = V/R\):</p>
+                    \[ V_L = I\,\omega_0 L = \frac{V}{R}\,\omega_0 L = Q_f\,V \]
+                  </div>
+                </details>
+
+                <h3>Daya listrik AC: segitiga daya</h3>
+                <p>Pada AC, tidak semua daya yang "ditarik" dari PLN berubah menjadi kerja berguna. Ada tiga jenis daya:</p>
+                <ul>
+                  <li><strong>Daya aktif \(P\)</strong> (watt, W): daya yang benar-benar dipakai jadi panas, cahaya, atau gerak.</li>
+                  <li><strong>Daya reaktif \(Q\)</strong> (volt-ampere reaktif, VAR): daya yang hanya bolak-balik antara sumber dan komponen L atau C, disimpan lalu dikembalikan.</li>
+                  <li><strong>Daya semu \(S\)</strong> (volt-ampere, VA): hasil kali tegangan dan arus RMS, yaitu total yang "diminta" dari sumber.</li>
+                </ul>
+                \[ S = V_{rms}I_{rms}, \qquad P = S\cos\varphi, \qquad Q = S\sin\varphi, \qquad S^2 = P^2 + Q^2 \]
+                <div class="analogi">
+                  <p><strong>Analogi.</strong> Segelas bir. Isi bir adalah daya aktif \(P\) (yang benar-benar kamu minum). Busanya adalah daya reaktif \(Q\) (memenuhi gelas, tapi tidak bisa diminum). Gelas penuh seluruhnya adalah daya semu \(S\).</p>
+                </div>
+                <p>Ketiganya membentuk segitiga siku-siku yang sebangun dengan segitiga impedansi (cukup kalikan sisi-sisinya dengan \(I^2\)): \(P = I^2R\), \(Q = I^2X\), \(S = I^2|\mathbf{Z}|\).</p>
+
+                <h3>Faktor daya (cos φ)</h3>
+                <p>Perbandingan daya yang terpakai terhadap daya yang diminta disebut <strong>faktor daya</strong>:</p>
+                \[ \text{PF} = \cos\varphi = \frac{P}{S} \]
+                <p>Nilainya antara 0 sampai 1. Makin mendekati 1, makin efisien. Faktor daya rendah berarti arus yang ditarik besar tapi kerja berguna kecil, sehingga kabel dan trafo terbebani sia-sia. Itu sebabnya perusahaan listrik dapat mengenakan biaya tambahan pada pelanggan industri berfaktor daya rendah, dan pabrik memasang kapasitor untuk memperbaikinya (kapasitor menetralkan sifat induktif motor).</p>
+                <div class="callout">
+                  <p><strong>Contoh.</strong> Motor 1000 W dengan \(\cos\varphi = 0{,}8\) pada 220 V.</p>
+                  \[ S = \frac{P}{\cos\varphi} = 1250\ \text{VA}, \qquad Q = S\sin\varphi = 1250(0{,}6) = 750\ \text{VAR}, \qquad I = \frac{S}{V} \approx 5{,}68\ \text{A} \]
+                  <p>Bandingkan dengan \(\cos\varphi = 1\): arus hanya \(1000/220 \approx 4{,}55\ \text{A}\).</p>
+                </div>
+
+                <details class="deriv">
+                  <summary><span class="flex items-center gap-2"><i data-lucide="sigma" class="w-5 h-5"></i> Lihat Penurunan Matematis</span><i data-lucide="chevron-down" class="chev w-5 h-5 shrink-0"></i></summary>
+                  <div class="deriv-body">
+                    <p>Ambil \(v = V_m\cos\omega t\) dan arus yang tertinggal sebesar \(\varphi\): \(i = I_m\cos(\omega t - \varphi)\). Daya sesaat:</p>
+                    \[ p(t) = v\,i = V_m I_m\cos(\omega t)\cos(\omega t - \varphi) = \frac{V_m I_m}{2}\bigl[\cos\varphi + \cos(2\omega t - \varphi)\bigr] \]
+                    <p>dengan identitas \(\cos A\cos B = \tfrac{1}{2}[\cos(A-B) + \cos(A+B)]\). Suku kedua berosilasi dengan rata-rata nol, sehingga daya rata-rata (daya aktif):</p>
+                    \[ P = \frac{V_m I_m}{2}\cos\varphi = \frac{V_m}{\sqrt{2}}\cdot\frac{I_m}{\sqrt{2}}\cos\varphi = V_{rms}I_{rms}\cos\varphi \]
+                    <p>Dengan \(S = V_{rms}I_{rms}\) didapat \(P = S\cos\varphi\). Daya reaktif didefinisikan \(Q = S\sin\varphi\), sehingga \(P^2 + Q^2 = S^2(\cos^2\varphi + \sin^2\varphi) = S^2\).</p>
+                  </div>
+                </details>
+              </div>
+            </section>
+
+            <!-- ================= BAB 8 ================= -->
+            <section id="sec-8" class="scroll-mt-24 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 md:p-8">
+              <h2 class="text-2xl font-extrabold">Bab 8: Aplikasi Nyata (Filter RLC)</h2>
+              <div class="kt">
+                <p>Ingat dua sifat penting dari Bab 5: reaktansi induktor naik bersama frekuensi, sedangkan reaktansi kapasitor turun bersama frekuensi. Dua sifat berlawanan ini bisa dipakai untuk <strong>memilih frekuensi</strong>: membiarkan sebagian lewat dan menahan sebagian lainnya. Rangkaian seperti itu disebut <strong>filter</strong>.</p>
+                <div class="analogi">
+                  <p><strong>Analogi.</strong> Saringan. Ada saringan yang hanya meloloskan butiran halus (nada rendah), ada yang hanya meloloskan butiran kasar (nada tinggi), dan ada yang hanya meloloskan satu ukuran tertentu (satu stasiun radio).</p>
+                </div>
+
+                <div class="overflow-x-auto">
+                  <table>
+                    <thead>
+                      <tr><th>Jenis filter</th><th>Yang diloloskan</th><th>Contoh rangkaian</th><th>Pemakaian nyata</th></tr>
+                    </thead>
+                    <tbody>
+                      <tr>
+                        <td><strong>Low-pass</strong></td>
+                        <td>Frekuensi rendah</td>
+                        <td>Resistor seri, keluaran diambil pada kapasitor; atau induktor seri dengan beban</td>
+                        <td>Jalur woofer pada crossover speaker; pembersih desis pada audio</td>
+                      </tr>
+                      <tr>
+                        <td><strong>High-pass</strong></td>
+                        <td>Frekuensi tinggi</td>
+                        <td>Kapasitor seri, keluaran diambil pada resistor</td>
+                        <td>Jalur tweeter pada crossover speaker; pemblokir arus DC pada input audio</td>
+                      </tr>
+                      <tr>
+                        <td><strong>Band-pass</strong></td>
+                        <td>Satu pita frekuensi di sekitar \(f_0\)</td>
+                        <td>Rangkaian RLC resonan</td>
+                        <td>Tuner radio: kapasitor variabel mengubah \(f_0\) untuk memilih stasiun</td>
+                      </tr>
+                    </tbody>
+                  </table>
+                </div>
+
+                <p>Titik peralihan filter RC (low-pass maupun high-pass) disebut <strong>frekuensi cut-off</strong>, saat sinyal tinggal \(1/\sqrt{2}\) (sekitar 70,7%) dari semula:</p>
+                \[ f_c = \frac{1}{2\pi RC} \]
+                <p>Untuk filter band-pass RLC, pusat pitanya adalah frekuensi resonansi \(f_0 = \dfrac{1}{2\pi\sqrt{LC}}\) dan lebar pitanya \(B = f_0/Q_f\). Makin tinggi \(Q_f\), makin selektif filternya, sehingga radio dapat membedakan dua stasiun yang frekuensinya berdekatan.</p>
+                <p><strong>Crossover speaker.</strong> Speaker rumah biasanya punya woofer (nada rendah) dan tweeter (nada tinggi). Agar tweeter yang mungil tidak dihantam nada bass, dipasang kapasitor seri sebagai high-pass di jalur tweeter, sedangkan induktor seri di jalur woofer sebagai low-pass.</p>
+
+                <details class="deriv">
+                  <summary><span class="flex items-center gap-2"><i data-lucide="sigma" class="w-5 h-5"></i> Lihat Penurunan Matematis</span><i data-lucide="chevron-down" class="chev w-5 h-5 shrink-0"></i></summary>
+                  <div class="deriv-body">
+                    <h3>RC low-pass (keluaran pada kapasitor)</h3>
+                    <p>Rangkaian ini adalah pembagi tegangan:</p>
+                    \[ H(j\omega) = \frac{\mathbf{V}_{out}}{\mathbf{V}_{in}} = \frac{1/(j\omega C)}{R + 1/(j\omega C)} = \frac{1}{1 + j\omega RC}, \qquad |H| = \frac{1}{\sqrt{1 + (\omega RC)^2}} \]
+                    <p>Untuk \(\omega \to 0\), \(|H| \to 1\) (lolos). Untuk \(\omega \to \infty\), \(|H| \to 0\) (tertahan). Titik cut-off adalah saat \(\omega RC = 1\):</p>
+                    \[ \omega_c = \frac{1}{RC} \;\Longrightarrow\; |H| = \frac{1}{\sqrt{2}} \approx 0{,}707, \qquad f_c = \frac{\omega_c}{2\pi} = \frac{1}{2\pi RC} \]
+
+                    <h3>RC high-pass (keluaran pada resistor)</h3>
+                    \[ H(j\omega) = \frac{R}{R + 1/(j\omega C)} = \frac{j\omega RC}{1 + j\omega RC}, \qquad |H| = \frac{\omega RC}{\sqrt{1 + (\omega RC)^2}} \]
+                    <p>Kebalikan low-pass: frekuensi rendah tertahan, frekuensi tinggi lolos, dengan cut-off yang sama \(f_c = 1/(2\pi RC)\).</p>
+                  </div>
+                </details>
+              </div>
+            </section>
+
+            <!-- ================= BAB 9 ================= -->
+            <section id="sec-9" class="scroll-mt-24 bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm p-6 md:p-8">
+              <h2 class="text-2xl font-extrabold">Bab 9: Glosarium</h2>
+              <div class="kt">
+                <p>Lupa arti sebuah istilah? Ketik di kotak pencarian, tabel akan menyaring otomatis.</p>
+
+                <input type="text" id="glossary-search" placeholder="Cari istilah..." autocomplete="off"
+                  class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-500/20 transition" />
+
+                <div class="overflow-x-auto mt-4">
+                  <table>
+                    <thead>
+                      <tr><th>Istilah</th><th>Simbol</th><th>Arti</th></tr>
+                    </thead>
+                    <tbody id="glossary-body">
+                      <tr><td>Arus searah (DC)</td><td>DC</td><td>Arus dengan arah dan nilai tetap terhadap waktu, misalnya dari baterai.</td></tr>
+                      <tr><td>Arus bolak-balik (AC)</td><td>AC</td><td>Arus yang arah dan nilainya berubah secara periodik, misalnya listrik PLN.</td></tr>
+                      <tr><td>GGL induksi</td><td>\(\varepsilon\)</td><td>Tegangan yang muncul pada kumparan akibat perubahan fluks magnetik (Hukum Faraday).</td></tr>
+                      <tr><td>Transformator</td><td>-</td><td>Alat untuk menaikkan atau menurunkan tegangan AC melalui induksi antarkumparan.</td></tr>
+                      <tr><td>Amplitudo</td><td>\(V_m\)</td><td>Nilai puncak (maksimum) gelombang.</td></tr>
+                      <tr><td>Frekuensi</td><td>\(f\)</td><td>Jumlah siklus per detik, satuan hertz (Hz).</td></tr>
+                      <tr><td>Periode</td><td>\(T\)</td><td>Waktu yang dibutuhkan untuk satu siklus lengkap, \(T = 1/f\).</td></tr>
+                      <tr><td>Frekuensi sudut</td><td>\(\omega\)</td><td>Laju pertambahan sudut gelombang, \(\omega = 2\pi f\), satuan rad/s.</td></tr>
+                      <tr><td>Sudut fase</td><td>\(\theta\)</td><td>Pergeseran awal gelombang pada \(t = 0\).</td></tr>
+                      <tr><td>Nilai RMS (efektif)</td><td>\(V_{rms}\)</td><td>Nilai tegangan DC yang menghasilkan daya yang sama dengan AC; \(V_{rms} = V_m/\sqrt{2}\).</td></tr>
+                      <tr><td>Nilai rata-rata</td><td>\(V_{avg}\)</td><td>Rata-rata gelombang; nol untuk satu periode penuh, \(2V_m/\pi\) untuk setengah periode.</td></tr>
+                      <tr><td>Bilangan kompleks</td><td>\(a + jb\)</td><td>Bilangan dengan bagian real \(a\) dan bagian imajiner \(b\).</td></tr>
+                      <tr><td>Identitas Euler</td><td>\(e^{j\varphi}\)</td><td>\(e^{j\varphi} = \cos\varphi + j\sin\varphi\); jembatan antara sinus dan bilangan kompleks.</td></tr>
+                      <tr><td>Phasor</td><td>\(\mathbf{V}\)</td><td>Bilangan kompleks (besar dan sudut) yang mewakili gelombang sinusoidal.</td></tr>
+                      <tr><td>Resistansi</td><td>\(R\)</td><td>Bagian real impedansi; hambatan yang mengubah energi listrik menjadi panas. Satuan ohm.</td></tr>
+                      <tr><td>Reaktansi</td><td>\(X\)</td><td>Bagian imajiner impedansi dari induktor dan kapasitor; \(X = X_L - X_C\). Satuan ohm.</td></tr>
+                      <tr><td>Reaktansi induktif</td><td>\(X_L\)</td><td>Perlawanan induktor terhadap perubahan arus; \(X_L = \omega L\).</td></tr>
+                      <tr><td>Reaktansi kapasitif</td><td>\(X_C\)</td><td>Perlawanan kapasitor terhadap perubahan tegangan; \(X_C = 1/(\omega C)\).</td></tr>
+                      <tr><td>Impedansi</td><td>\(\mathbf{Z}\)</td><td>Hambatan total pada rangkaian AC; \(\mathbf{Z} = R + jX\). Satuan ohm.</td></tr>
+                      <tr><td>Admittansi</td><td>\(\mathbf{Y}\)</td><td>Kebalikan impedansi, \(\mathbf{Y} = 1/\mathbf{Z}\). Satuan siemens (S).</td></tr>
+                      <tr><td>Konduktansi</td><td>\(G\)</td><td>Bagian real admittansi.</td></tr>
+                      <tr><td>Suseptansi</td><td>\(B\)</td><td>Bagian imajiner admittansi.</td></tr>
+                      <tr><td>Resonansi</td><td>-</td><td>Kondisi saat \(X_L = X_C\): impedansi minimum dan arus maksimum pada rangkaian seri RLC.</td></tr>
+                      <tr><td>Frekuensi resonansi</td><td>\(f_0\)</td><td>Frekuensi saat resonansi terjadi; \(f_0 = 1/(2\pi\sqrt{LC})\).</td></tr>
+                      <tr><td>Faktor kualitas (Q-factor)</td><td>\(Q_f\)</td><td>Ukuran ketajaman resonansi; \(Q_f = \omega_0 L/R\).</td></tr>
+                      <tr><td>Daya aktif</td><td>\(P\)</td><td>Daya yang benar-benar terpakai, satuan watt (W).</td></tr>
+                      <tr><td>Daya reaktif</td><td>\(Q\)</td><td>Daya yang bolak-balik antara sumber dan komponen L/C, satuan VAR.</td></tr>
+                      <tr><td>Daya semu</td><td>\(S\)</td><td>Hasil kali \(V_{rms}I_{rms}\), satuan volt-ampere (VA).</td></tr>
+                      <tr><td>Faktor daya</td><td>\(\cos\varphi\)</td><td>Perbandingan daya aktif terhadap daya semu, \(P/S\).</td></tr>
+                      <tr><td>Filter</td><td>-</td><td>Rangkaian yang meloloskan sebagian frekuensi dan menahan frekuensi lain (low-pass, high-pass, band-pass).</td></tr>
+                      <tr><td>Frekuensi cut-off</td><td>\(f_c\)</td><td>Frekuensi saat sinyal filter tinggal \(1/\sqrt{2}\) dari nilai semula; \(f_c = 1/(2\pi RC)\).</td></tr>
+                    </tbody>
+                  </table>
+                </div>
+                <p id="glossary-empty" class="hidden text-center text-slate-500 dark:text-slate-400 font-semibold">Tidak ada istilah yang cocok.</p>
+              </div>
+            </section>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ---------- PLACEHOLDER VIEWS ---------- -->
+        <!-- ---------- LAB RLC VIEW ---------- -->
+    <div id="lab-view" class="hidden">
+      <div class="max-w-6xl mx-auto px-4 py-8">
+        
+        <!-- Header Lab -->
+        <div class="mb-8 flex flex-col md:flex-row md:items-end justify-between gap-4">
+          <div>
+            <p class="text-sm font-extrabold uppercase tracking-widest text-sky-500">Laboratorium Virtual</p>
+            <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mt-1">Eksperimen Rangkaian RLC</h1>
+            <p class="text-slate-600 dark:text-slate-400 mt-2">Ubah nilai komponen dan jenis rangkaian untuk mengamati perubahan Impedansi, Arus, dan Fase.</p>
+          </div>
+          
+          <!-- Toggle Seri / Paralel -->
+          <div class="inline-flex bg-slate-200 dark:bg-slate-800 p-1 rounded-xl border border-slate-300 dark:border-slate-700 self-start md:self-auto shadow-inner">
+            <button id="btn-seri" class="px-6 py-2 rounded-lg font-bold text-sm bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-400 shadow-sm transition-all">Seri</button>
+            <button id="btn-paralel" class="px-6 py-2 rounded-lg font-bold text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-all">Paralel</button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-[1fr_1.5fr] gap-6">
+          
+          <!-- ================= KOLOM KIRI: Kontrol & Data ================= -->
+          <div class="space-y-5">
+            
+                        <!-- 1. Skema Rangkaian (SVG Dinamis) -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
+              <div class="absolute top-3 left-4 text-xs font-bold text-slate-400">SKEMA RANGKAIAN</div>
+              <svg id="circuit-svg" viewBox="0 0 300 120" class="w-full max-w-[280px] h-auto text-slate-600 dark:text-slate-300 mt-4" role="img" aria-label="Skema Rangkaian"></svg>
+            </div>
+
+            <!-- 1b. Diagram Fasor -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm flex flex-col items-center justify-center relative overflow-hidden">
+              <div class="absolute top-3 left-4 text-xs font-bold text-slate-400">DIAGRAM FASOR</div>
+                            <svg id="phasor-svg" viewBox="0 0 320 240" class="w-full max-w-[340px] h-auto text-slate-600 dark:text-slate-300 mt-4" role="img" aria-label="Diagram fasor tegangan dan arus"></svg>
+              <div id="phasor-legend" class="w-full mt-3 grid grid-cols-2 gap-x-3 gap-y-1.5 text-xs font-bold"></div>
+            </div>
+
+            <!-- 2. Kontrol Slider -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm space-y-5">
+              <!-- Resistansi -->
+              <div>
+                <div class="flex justify-between items-center mb-2">
+                  <label class="text-sm font-bold">Resistansi (R)</label>
+                  <div class="flex items-center gap-1">
+                    <input type="number" id="numR" min="1" max="2000" value="50" class="w-16 text-right text-sm font-mono bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-0.5 outline-none focus:border-sky-500">
+                    <span class="text-xs font-bold text-slate-500">Ω</span>
+                  </div>
+                </div>
+                <input type="range" id="sliderR" min="1" max="2000" value="50" class="w-full accent-sky-500 cursor-pointer">
+                <!-- Component Picker R -->
+                <div class="flex gap-2 mt-3 overflow-x-auto pb-1" id="pick-R">
+                  <button data-val="10" class="flex-shrink-0 flex flex-col items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-sky-500 bg-slate-50 dark:bg-slate-900 transition-colors"><svg width="30" height="15" viewBox="0 0 40 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" class="mb-1"><path d="M 0 10 L 5 10 L 8 2 L 14 18 L 20 2 L 26 18 L 32 2 L 35 10 L 40 10"/></svg><span class="text-[10px] font-bold">10 Ω</span></button>
+                  <button data-val="47" class="flex-shrink-0 flex flex-col items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-sky-500 bg-slate-50 dark:bg-slate-900 transition-colors"><svg width="30" height="15" viewBox="0 0 40 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" class="mb-1"><path d="M 0 10 L 5 10 L 8 2 L 14 18 L 20 2 L 26 18 L 32 2 L 35 10 L 40 10"/></svg><span class="text-[10px] font-bold">47 Ω</span></button>
+                  <button data-val="100" class="flex-shrink-0 flex flex-col items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-sky-500 bg-slate-50 dark:bg-slate-900 transition-colors"><svg width="30" height="15" viewBox="0 0 40 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" class="mb-1"><path d="M 0 10 L 5 10 L 8 2 L 14 18 L 20 2 L 26 18 L 32 2 L 35 10 L 40 10"/></svg><span class="text-[10px] font-bold">100 Ω</span></button>
+                  <button data-val="220" class="flex-shrink-0 flex flex-col items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-sky-500 bg-slate-50 dark:bg-slate-900 transition-colors"><svg width="30" height="15" viewBox="0 0 40 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" class="mb-1"><path d="M 0 10 L 5 10 L 8 2 L 14 18 L 20 2 L 26 18 L 32 2 L 35 10 L 40 10"/></svg><span class="text-[10px] font-bold">220 Ω</span></button>
+                  <button data-val="470" class="flex-shrink-0 flex flex-col items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-sky-500 bg-slate-50 dark:bg-slate-900 transition-colors"><svg width="30" height="15" viewBox="0 0 40 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" class="mb-1"><path d="M 0 10 L 5 10 L 8 2 L 14 18 L 20 2 L 26 18 L 32 2 L 35 10 L 40 10"/></svg><span class="text-[10px] font-bold">470 Ω</span></button>
+                  <button data-val="1000" class="flex-shrink-0 flex flex-col items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-sky-500 bg-slate-50 dark:bg-slate-900 transition-colors"><svg width="30" height="15" viewBox="0 0 40 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" class="mb-1"><path d="M 0 10 L 5 10 L 8 2 L 14 18 L 20 2 L 26 18 L 32 2 L 35 10 L 40 10"/></svg><span class="text-[10px] font-bold">1k Ω</span></button>
+                </div>
+                                <p id="color-code" class="mt-2 text-xs font-semibold text-slate-500 dark:text-slate-400"></p>
+              </div>
+
+              <!-- Induktansi -->
+              <div>
+                <div class="flex justify-between items-center mb-2">
+                  <label class="text-sm font-bold">Induktansi (L)</label>
+                  <div class="flex items-center gap-1">
+                    <input type="number" id="numL" min="10" max="1000" value="100" class="w-16 text-right text-sm font-mono bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-0.5 outline-none focus:border-sky-500">
+                    <span class="text-xs font-bold text-slate-500">mH</span>
+                  </div>
+                </div>
+                <input type="range" id="sliderL" min="10" max="1000" value="100" class="w-full accent-sky-500 cursor-pointer">
+                <!-- Component Picker L -->
+                <div class="flex gap-2 mt-3 overflow-x-auto pb-1" id="pick-L">
+                  <button data-val="10" class="flex-shrink-0 flex flex-col items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-sky-500 bg-slate-50 dark:bg-slate-900 transition-colors"><svg width="30" height="15" viewBox="0 0 40 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="mb-1"><path d="M 0 10 Q 5 0 10 10 Q 15 0 20 10 Q 25 0 30 10 Q 35 0 40 10"/></svg><span class="text-[10px] font-bold">10 mH</span></button>
+                  <button data-val="47" class="flex-shrink-0 flex flex-col items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-sky-500 bg-slate-50 dark:bg-slate-900 transition-colors"><svg width="30" height="15" viewBox="0 0 40 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="mb-1"><path d="M 0 10 Q 5 0 10 10 Q 15 0 20 10 Q 25 0 30 10 Q 35 0 40 10"/></svg><span class="text-[10px] font-bold">47 mH</span></button>
+                  <button data-val="100" class="flex-shrink-0 flex flex-col items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-sky-500 bg-slate-50 dark:bg-slate-900 transition-colors"><svg width="30" height="15" viewBox="0 0 40 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="mb-1"><path d="M 0 10 Q 5 0 10 10 Q 15 0 20 10 Q 25 0 30 10 Q 35 0 40 10"/></svg><span class="text-[10px] font-bold">100 mH</span></button>
+                  <button data-val="220" class="flex-shrink-0 flex flex-col items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-sky-500 bg-slate-50 dark:bg-slate-900 transition-colors"><svg width="30" height="15" viewBox="0 0 40 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="mb-1"><path d="M 0 10 Q 5 0 10 10 Q 15 0 20 10 Q 25 0 30 10 Q 35 0 40 10"/></svg><span class="text-[10px] font-bold">220 mH</span></button>
+                  <button data-val="470" class="flex-shrink-0 flex flex-col items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-sky-500 bg-slate-50 dark:bg-slate-900 transition-colors"><svg width="30" height="15" viewBox="0 0 40 20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="mb-1"><path d="M 0 10 Q 5 0 10 10 Q 15 0 20 10 Q 25 0 30 10 Q 35 0 40 10"/></svg><span class="text-[10px] font-bold">470 mH</span></button>
+                </div>
+              </div>
+
+              <!-- Kapasitansi -->
+              <div>
+                <div class="flex justify-between items-center mb-2">
+                  <label class="text-sm font-bold">Kapasitansi (C)</label>
+                  <div class="flex items-center gap-1">
+                    <input type="number" id="numC" min="1" max="100" value="10" class="w-16 text-right text-sm font-mono bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-0.5 outline-none focus:border-sky-500">
+                    <span class="text-xs font-bold text-slate-500">µF</span>
+                  </div>
+                </div>
+                <input type="range" id="sliderC" min="1" max="100" value="10" class="w-full accent-sky-500 cursor-pointer">
+                <!-- Component Picker C -->
+                <div class="flex gap-2 mt-3 overflow-x-auto pb-1" id="pick-C">
+                  <button data-val="10" class="flex-shrink-0 flex flex-col items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-sky-500 bg-slate-50 dark:bg-slate-900 transition-colors"><svg width="30" height="15" viewBox="0 0 40 20" fill="none" stroke="currentColor" stroke-width="2" class="mb-1"><line x1="15" y1="2" x2="15" y2="18"/><line x1="25" y1="2" x2="25" y2="18"/><line x1="0" y1="10" x2="15" y2="10"/><line x1="25" y1="10" x2="40" y2="10"/></svg><span class="text-[10px] font-bold">10 µF</span></button>
+                  <button data-val="22" class="flex-shrink-0 flex flex-col items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-sky-500 bg-slate-50 dark:bg-slate-900 transition-colors"><svg width="30" height="15" viewBox="0 0 40 20" fill="none" stroke="currentColor" stroke-width="2" class="mb-1"><line x1="15" y1="2" x2="15" y2="18"/><line x1="25" y1="2" x2="25" y2="18"/><line x1="0" y1="10" x2="15" y2="10"/><line x1="25" y1="10" x2="40" y2="10"/></svg><span class="text-[10px] font-bold">22 µF</span></button>
+                  <button data-val="47" class="flex-shrink-0 flex flex-col items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-sky-500 bg-slate-50 dark:bg-slate-900 transition-colors"><svg width="30" height="15" viewBox="0 0 40 20" fill="none" stroke="currentColor" stroke-width="2" class="mb-1"><line x1="15" y1="2" x2="15" y2="18"/><line x1="25" y1="2" x2="25" y2="18"/><line x1="0" y1="10" x2="15" y2="10"/><line x1="25" y1="10" x2="40" y2="10"/></svg><span class="text-[10px] font-bold">47 µF</span></button>
+                  <button data-val="100" class="flex-shrink-0 flex flex-col items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-sky-500 bg-slate-50 dark:bg-slate-900 transition-colors"><svg width="30" height="15" viewBox="0 0 40 20" fill="none" stroke="currentColor" stroke-width="2" class="mb-1"><line x1="15" y1="2" x2="15" y2="18"/><line x1="25" y1="2" x2="25" y2="18"/><line x1="0" y1="10" x2="15" y2="10"/><line x1="25" y1="10" x2="40" y2="10"/></svg><span class="text-[10px] font-bold">100 µF</span></button>
+                </div>
+              </div>
+
+              <!-- Frekuensi -->
+              <div>
+                <div class="flex justify-between items-center mb-2">
+                  <label class="text-sm font-bold">Frekuensi (f)</label>
+                  <div class="flex items-center gap-1">
+                    <input type="number" id="numF" min="10" max="500" value="50" class="w-16 text-right text-sm font-mono bg-slate-100 dark:bg-slate-900 border border-slate-300 dark:border-slate-600 rounded px-2 py-0.5 outline-none focus:border-sky-500">
+                    <span class="text-xs font-bold text-slate-500">Hz</span>
+                  </div>
+                </div>
+                <input type="range" id="sliderF" min="10" max="500" value="50" class="w-full accent-sky-500 cursor-pointer">
+                <button id="btn-resonansi" class="mt-2 w-full flex items-center justify-center gap-2 bg-emerald-100 dark:bg-emerald-500/20 text-emerald-700 dark:text-emerald-400 hover:bg-emerald-200 dark:hover:bg-emerald-500/30 rounded-lg py-2 text-sm font-bold transition-colors">
+                  <i data-lucide="target" class="w-4 h-4"></i> Set ke Resonansi
+                </button>
+              </div>
+            </div>
+
+            <!-- 3. Panel Hasil -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm text-sm">
+              <h3 class="font-extrabold mb-3 flex items-center gap-2"><i data-lucide="calculator" class="w-4 h-4 text-sky-500"></i> Hasil Perhitungan</h3>
+              <div class="grid grid-cols-2 gap-y-3 gap-x-4">
+                <div class="flex flex-col"><span class="text-slate-500 text-xs">Reaktansi Induktif (\(X_L\))</span> <strong id="outXL" class="text-sky-500 font-mono text-base">-</strong></div>
+                <div class="flex flex-col"><span class="text-slate-500 text-xs">Reaktansi Kapasitif (\(X_C\))</span> <strong id="outXC" class="text-sky-500 font-mono text-base">-</strong></div>
+                <div class="flex flex-col"><span class="text-slate-500 text-xs">Impedansi Total (\(Z\))</span> <strong id="outZ" class="text-sky-500 font-mono text-base">-</strong></div>
+                <div class="flex flex-col"><span class="text-slate-500 text-xs">Arus Total (\(I\))</span> <strong id="outI" class="text-sky-500 font-mono text-base">-</strong></div>
+                <div class="flex flex-col"><span class="text-slate-500 text-xs">Beda Fase (\(\varphi\))</span> <strong id="outPhi" class="text-sky-500 font-mono text-base">-</strong></div>
+                <div class="flex flex-col"><span class="text-slate-500 text-xs">Sifat Rangkaian</span> <strong id="outType" class="text-emerald-500 font-bold text-base">-</strong></div>
+              </div>
+               <details class="mt-4 border-t border-slate-200 dark:border-slate-700 pt-3">
+                <summary class="cursor-pointer text-sm font-bold text-sky-600 dark:text-sky-400 flex items-center gap-2 hover:text-sky-700">
+                  <i data-lucide="list-ordered" class="w-4 h-4"></i> Lihat Langkah Perhitungan
+                </summary>
+                <div id="calc-steps" class="mt-3 text-sm text-slate-600 dark:text-slate-400 space-y-2 bg-slate-50 dark:bg-slate-900/50 p-3 rounded-lg overflow-x-auto">
+                  <!-- Akan diisi via JS -->
+                </div>
+              </details>
+            </div>
+          </div>
+
+          <!-- ================= KOLOM KANAN: Grafik & Data Logger ================= -->
+          <div class="space-y-5 flex flex-col">
+            
+                        <!-- Grafik Area -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm flex flex-col h-[380px]">
+              <!-- Tab Grafik -->
+              <div class="flex items-center justify-between mb-4">
+                <h3 class="font-extrabold flex items-center gap-2">
+                  <i data-lucide="activity" class="w-5 h-5 text-sky-500"></i> Visualisasi
+                </h3>
+                <div class="inline-flex bg-slate-100 dark:bg-slate-900 p-1 rounded-lg border border-slate-200 dark:border-slate-700">
+                  <button id="tab-time" class="px-3 py-1 rounded-md text-xs font-bold bg-white dark:bg-slate-700 shadow-sm text-sky-600 dark:text-sky-400 transition-all">Osiloskop (Waktu)</button>
+                  <button id="tab-freq" class="px-3 py-1 rounded-md text-xs font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all">Kurva Resonansi</button>
+                </div>
+              </div>
+              
+              <div class="relative flex-1 min-h-[250px]">
+                <canvas id="rlcChart"></canvas>
+              </div>
+              <p id="chart-caption" class="text-xs text-center text-slate-500 dark:text-slate-400 mt-4">
+                Garis Biru = Tegangan (V) | Garis Merah = Arus (I)
+              </p>
+            </div>
+
+            <!-- Data Logger -->
+            <div class="bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 p-5 shadow-sm">
+              <div class="flex items-center justify-between mb-3">
+                <h3 class="font-extrabold flex items-center gap-2"><i data-lucide="table" class="w-4 h-4 text-sky-500"></i> Tabel Praktikum</h3>
+                                <div class="flex gap-2">
+                  <button id="btn-record" class="flex items-center gap-1.5 bg-sky-500 hover:bg-sky-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm">
+                    <i data-lucide="plus" class="w-3.5 h-3.5"></i> Catat Data
+                  </button>
+                  <button id="btn-export" class="flex items-center gap-1.5 bg-emerald-500 hover:bg-emerald-600 text-white px-3 py-1.5 rounded-lg text-xs font-bold transition-colors shadow-sm">
+                    <i data-lucide="download" class="w-3.5 h-3.5"></i> Ekspor
+                  </button>
+                  <button id="btn-clear" class="flex items-center gap-1.5 bg-slate-100 hover:bg-rose-100 dark:bg-slate-700 dark:hover:bg-rose-500/20 text-slate-600 hover:text-rose-600 dark:text-slate-300 dark:hover:text-rose-400 px-3 py-1.5 rounded-lg text-xs font-bold transition-colors">
+                    <i data-lucide="trash-2" class="w-3.5 h-3.5"></i> Hapus
+                  </button>
+                </div>
+              </div>
+              <div class="overflow-x-auto max-h-[200px] overflow-y-auto rounded-lg border border-slate-200 dark:border-slate-700">
+                <table class="w-full text-xs text-left">
+                  <thead class="bg-slate-50 dark:bg-slate-900 sticky top-0">
+                    <tr class="text-slate-500 dark:text-slate-400">
+                      <th class="px-3 py-2 font-bold">No</th>
+                      <th class="px-3 py-2 font-bold">R (Ω)</th>
+                      <th class="px-3 py-2 font-bold">L (mH)</th>
+                      <th class="px-3 py-2 font-bold">C (µF)</th>
+                      <th class="px-3 py-2 font-bold">f (Hz)</th>
+                      <th class="px-3 py-2 font-bold">Z (Ω)</th>
+                      <th class="px-3 py-2 font-bold">I (A)</th>
+                      <th class="px-3 py-2 font-bold">Fase</th>
+                    </tr>
+                  </thead>
+                  <tbody id="table-body" class="divide-y divide-slate-100 dark:divide-slate-700/50">
+                    <!-- Data akan diisi via JS -->
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+        <div id="quiz-view" class="hidden">
+      <div class="max-w-3xl mx-auto px-4 py-8">
+        <div class="mb-8">
+          <p class="text-sm font-extrabold uppercase tracking-widest text-sky-500">Kuis</p>
+          <h1 class="text-3xl md:text-4xl font-extrabold tracking-tight mt-1">Uji Pemahamanmu</h1>
+        </div>
+        <div id="quiz-root"></div>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- ============ FOOTER ============ -->
+  <footer class="border-t border-slate-200 dark:border-slate-800 py-6 px-4 text-center">
+    <p class="text-sm text-slate-400 dark:text-slate-500">
+      © 2026 Virtual Lab Elektronika. Referensi: Sadiku &amp; Boylestad.
+    </p>
+  </footer>
+
+  <!-- ============ MODAL LOGIN ============ -->
+  <div id="login-modal" class="hidden fixed inset-0 z-[60] items-center justify-center bg-slate-900/70 backdrop-blur-sm p-4"
+    role="dialog" aria-modal="true" aria-labelledby="login-title">
+    <div class="modal-pop relative w-full max-w-md bg-white dark:bg-slate-800 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-700 p-8">
+      <button id="login-close" type="button" aria-label="Tutup"
+        class="absolute top-4 right-4 p-2 rounded-full text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors">
+        <i data-lucide="x" class="w-5 h-5"></i>
+      </button>
+
+      <div class="w-14 h-14 rounded-2xl bg-sky-100 dark:bg-sky-500/15 flex items-center justify-center mb-5">
+        <i data-lucide="zap" class="w-7 h-7 text-sky-500"></i>
+      </div>
+      <h2 id="login-title" class="text-2xl font-extrabold">Selamat Datang</h2>
+      <p class="mt-1 text-sm text-slate-500 dark:text-slate-400">Isi data singkat berikut untuk melanjutkan.</p>
+
+      <form id="login-form" class="mt-6 space-y-4">
+        <div>
+          <label for="login-name" class="block text-sm font-bold mb-1.5">Nama Panggilan</label>
+          <input id="login-name" type="text" required maxlength="30" autocomplete="nickname"
+            class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-500/20 transition" />
+        </div>
+        <div>
+          <label for="login-email" class="block text-sm font-bold mb-1.5">Email</label>
+          <input id="login-email" type="email" required autocomplete="email" placeholder="nama@email.com"
+            class="w-full rounded-xl border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-900 px-4 py-2.5 outline-none focus:border-sky-500 focus:ring-4 focus:ring-sky-500/20 transition" />
+        </div>
+        <p id="login-error" class="hidden text-sm font-semibold text-rose-500"></p>
+        <button type="submit"
+          class="w-full bg-sky-500 text-white rounded-full py-3 font-bold shadow-lg shadow-sky-500/30 hover:scale-[1.02] transition-transform focus:outline-none focus-visible:ring-4 focus-visible:ring-sky-300/60">
+          Lanjutkan
+        </button>
+      </form>
+    </div>
+  </div>
+
+  <!-- KaTeX JS (sebelum </body>) -->
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/katex.min.js"></script>
+  <script defer src="https://cdn.jsdelivr.net/npm/katex@0.16.11/dist/contrib/auto-render.min.js"></script>
+
+  <!-- ============ JAVASCRIPT ============ -->
+  <script>
+    const VIEW_IDS = ['home-view', 'theory-view', 'lab-view', 'quiz-view'];
+    const KEY_NAME = 'vlab-user-name';
+    const KEY_EMAIL = 'vlab-user-email';
+    const root = document.documentElement;
+
+    let currentView = 'home-view';
+    let pendingView = null;   // view yang dituju sebelum diminta login
+    let memUser = null;       // cadangan bila localStorage tidak tersedia
+
+    lucide.createIcons();
+
+    /* ---------- Dark mode ---------- */
+    try {
+      if (localStorage.getItem('vlab-theme') === 'dark') root.classList.add('dark');
+    } catch (e) {}
+
+document.getElementById('theme-toggle').addEventListener('click', () => {
+  const isDark = root.classList.toggle('dark');
+  try { localStorage.setItem('vlab-theme', isDark ? 'dark' : 'light'); } catch (e) {}
+  if (window.vlabLabRefresh) window.vlabLabRefresh();
+});
+
+    /* ---------- Data pengguna ---------- */
+    function getUser() {
+      try {
+        const name = localStorage.getItem(KEY_NAME);
+        if (name) return { name, email: localStorage.getItem(KEY_EMAIL) || '' };
+      } catch (e) {}
+      return memUser;
+    }
+    function saveUser(name, email) {
+      memUser = { name, email };
+      try {
+        localStorage.setItem(KEY_NAME, name);
+        localStorage.setItem(KEY_EMAIL, email);
+      } catch (e) {}
+    }
+    function clearUser() {
+      memUser = null;
+      try {
+        localStorage.removeItem(KEY_NAME);
+        localStorage.removeItem(KEY_EMAIL);
+      } catch (e) {}
+    }
+
+    /* ---------- Header: Masuk / Halo, [Nama]! ---------- */
+    const loginBtn = document.getElementById('login-btn');
+    const userMenu = document.getElementById('user-menu');
+    const userBtn = document.getElementById('user-btn');
+    const userLabel = document.getElementById('user-label');
+    const userDropdown = document.getElementById('user-dropdown');
+
+    function renderAuth() {
+      const user = getUser();
+      if (user) {
+        userLabel.textContent = 'Halo, ' + user.name + '!';
+        loginBtn.classList.add('hidden');
+        userMenu.classList.remove('hidden');
+      } else {
+        userMenu.classList.add('hidden');
+        loginBtn.classList.remove('hidden');
+      }
+      closeDropdown();
+    }
+
+    function closeDropdown() {
+      userDropdown.classList.add('hidden');
+      userBtn.setAttribute('aria-expanded', 'false');
+    }
+    userBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = userDropdown.classList.toggle('hidden') === false;
+      userBtn.setAttribute('aria-expanded', String(open));
+    });
+    document.addEventListener('click', (e) => {
+      if (!userMenu.contains(e.target)) closeDropdown();
+    });
+
+    document.getElementById('logout-btn').addEventListener('click', () => {
+      clearUser();
+      renderAuth();
+      if (currentView === 'quiz-view') showView('home-view');
+    });
+
+    /* ---------- Modal login ---------- */
+    const modal = document.getElementById('login-modal');
+    const form = document.getElementById('login-form');
+    const nameInput = document.getElementById('login-name');
+    const emailInput = document.getElementById('login-email');
+    const errorEl = document.getElementById('login-error');
+
+    function openLoginModal() {
+      errorEl.classList.add('hidden');
+      modal.classList.remove('hidden');
+      modal.classList.add('flex');
+      document.body.classList.add('overflow-hidden');
+      setTimeout(() => nameInput.focus(), 50);
+    }
+    function closeLoginModal(clearPending = true) {
+      modal.classList.add('hidden');
+      modal.classList.remove('flex');
+      document.body.classList.remove('overflow-hidden');
+      if (clearPending) pendingView = null;
+    }
+
+    loginBtn.addEventListener('click', () => openLoginModal());
+    document.getElementById('login-close').addEventListener('click', () => closeLoginModal());
+    modal.addEventListener('click', (e) => { if (e.target === modal) closeLoginModal(); });
+    document.addEventListener('keydown', (e) => {
+      if (e.key !== 'Escape') return;
+      if (!modal.classList.contains('hidden')) closeLoginModal();
+      closeDropdown();
+    });
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const name = nameInput.value.trim();
+      const email = emailInput.value.trim();
+      if (!name) {
+        errorEl.textContent = 'Nama panggilan tidak boleh kosong.';
+        errorEl.classList.remove('hidden');
+        nameInput.focus();
+        return;
+      }
+      saveUser(name, email);
+      form.reset();
+      closeLoginModal(false);
+      renderAuth();
+      if (pendingView) {
+        const target = pendingView;
+        pendingView = null;
+        showView(target);
+      }
+    });
+
+    /* ---------- Navigasi antar view ---------- */
+    const backBtn = document.getElementById('back-btn');
+    backBtn.addEventListener('click', () => showView('home-view'));
+
+    function showView(viewId) {
+      // Kuis hanya untuk pengguna yang sudah login
+      if (viewId === 'quiz-view' && !getUser()) {
+        pendingView = 'quiz-view';
+        openLoginModal();
+        return;
+      }
+      VIEW_IDS.forEach((id) => {
+        const el = document.getElementById(id);
+        if (!el) return;
+        if (id === viewId) {
+          el.classList.remove('hidden', 'view-enter');
+          void el.offsetWidth; // restart animasi
+          el.classList.add('view-enter');
+        } else {
+          el.classList.add('hidden');
+        }
+      });
+            currentView = viewId;
+      if (viewId === 'quiz-view' && window.vlabQuizOpen) window.vlabQuizOpen();
+
+            if (viewId === 'lab-view') {
+        setTimeout(() => {
+          if (window.Chart && Chart.getChart("rlcChart")) {
+            Chart.getChart("rlcChart").resize();
+          }
+          if (window.renderMathInElement) {
+            renderMathInElement(document.getElementById('lab-view'));
+          }
+        }, 100); 
+      }
+
+      // Tombol Kembali di header: hanya di Teori / Lab / Kuis
+      const onHome = viewId === 'home-view';
+      backBtn.classList.toggle('hidden', onHome);
+      backBtn.classList.toggle('inline-flex', !onHome);
+
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    document.querySelectorAll('[data-target]').forEach((card) => {
+      const go = () => showView(card.dataset.target);
+      card.addEventListener('click', go);
+      card.addEventListener('keydown', (e) => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); go(); }
+      });
+    });
+
+    document.getElementById('start-btn').addEventListener('click', () => {
+      document.getElementById('menu-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    });
+
+    /* ---------- Daftar isi teori ---------- */
+    const tocToggle = document.getElementById('toc-toggle');
+    const tocList = document.getElementById('toc-list');
+    const tocChevron = document.getElementById('toc-chevron');
+    const isDesktop = () => window.matchMedia('(min-width: 1024px)').matches;
+
+    tocToggle.addEventListener('click', () => {
+      const hidden = tocList.classList.toggle('hidden');
+      tocToggle.setAttribute('aria-expanded', String(!hidden));
+      tocChevron.classList.toggle('rotate-180', !hidden);
+    });
+
+    document.querySelectorAll('#toc-list a[href^="#"]').forEach((link) => {
+      link.addEventListener('click', (e) => {
+        e.preventDefault();
+        const target = document.querySelector(link.getAttribute('href'));
+        if (!target) return;
+        target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        if (!isDesktop()) {
+          tocList.classList.add('hidden');
+          tocToggle.setAttribute('aria-expanded', 'false');
+          tocChevron.classList.remove('rotate-180');
+        }
+      });
+    });
+
+    /* ---------- Mini-simulasi Bab 2: phasor & gelombang sinus ---------- */
+    (function initSim() {
+      const $ = (id) => document.getElementById(id);
+      if (!$('sim-wave') || !$('sim-circle')) return;
+
+      const theoryView = $('theory-view');
+
+      // Geometri lingkaran (kiri)
+      const CX = 130, CY = 130, R = 90, ARC_R = 28;
+      // Geometri gelombang (kanan): sumbu x = sudut ωt 0..720°
+      const X0 = 56, XW = 330, SPAN = 720, PX = XW / SPAN, YMID = 130, AMP = 90;
+      const SPEED = 90; // derajat per detik (sengaja pelan)
+
+      const sim = { theta: 0, alpha: 0, playing: true };
+      let last = null;
+
+      const rad = (d) => (d * Math.PI) / 180;
+      const f = (n) => n.toFixed(1);
+      const wx = (a) => X0 + a * PX;
+      const wy = (a, th) => YMID - AMP * Math.sin(rad(a + th));
+
+      const el = {
+        phasor: $('sim-phasor'), proj: $('sim-proj'), drop: $('sim-drop'), arc: $('sim-arc'), vmLabel: $('sim-vm-label'),
+        faint: $('sim-wave-faint'), solid: $('sim-wave-solid'), dot: $('sim-dot'), guide: $('sim-dot-guide'),
+        tl: $('sim-t-l'), tr: $('sim-t-r'), tg1: $('sim-t-g1'), tg2: $('sim-t-g2'), tLabel: $('sim-t-label'),
+        thetaOut: $('sim-theta-out'), wtOut: $('sim-wt-out'), phiOut: $('sim-phi-out'), vOut: $('sim-v-out'),
+        slider: $('sim-theta'), play: $('sim-play'), icoPlay: $('sim-ico-play'), icoPause: $('sim-ico-pause'), playText: $('sim-play-text'),
+      };
+
+      function curve(th, upTo) {
+        let d = '';
+        for (let a = 0; a < upTo; a += 4) {
+          d += (d ? 'L' : 'M') + f(wx(a)) + ' ' + f(wy(a, th)) + ' ';
+        }
+        d += (d ? 'L' : 'M') + f(wx(upTo)) + ' ' + f(wy(upTo, th));
+        return d;
+      }
+
+      function render() {
+        const th = sim.theta, a = sim.alpha;
+        const phi = (((a + th) % 360) + 360) % 360;
+        const r = rad(phi);
+        const tx = CX + R * Math.cos(r);
+        const ty = CY - R * Math.sin(r);
+
+        // Lingkaran + phasor
+        el.phasor.setAttribute('x2', f(tx));
+        el.phasor.setAttribute('y2', f(ty));
+        el.proj.setAttribute('x1', f(tx));
+        el.proj.setAttribute('y1', f(ty));
+        el.proj.setAttribute('y2', f(ty));
+        el.drop.setAttribute('x1', f(tx));
+        el.drop.setAttribute('y1', f(ty));
+        el.drop.setAttribute('x2', f(tx));
+        el.drop.setAttribute('y2', String(CY));
+
+        if (phi < 0.5) {
+          el.arc.setAttribute('d', '');
+        } else {
+          const ex = CX + ARC_R * Math.cos(r), ey = CY - ARC_R * Math.sin(r);
+          el.arc.setAttribute('d', 'M ' + (CX + ARC_R) + ' ' + CY + ' A ' + ARC_R + ' ' + ARC_R + ' 0 ' + (phi > 180 ? 1 : 0) + ' 0 ' + f(ex) + ' ' + f(ey));
+        }
+
+        const mx = CX + 0.5 * R * Math.cos(r), my = CY - 0.5 * R * Math.sin(r);
+        el.vmLabel.setAttribute('x', f(mx + 12 * Math.sin(r)));
+        el.vmLabel.setAttribute('y', f(my + 12 * Math.cos(r)));
+
+        // Gelombang: bagian yang sudah terbentuk (solid) dan sisanya (putus-putus)
+        el.faint.setAttribute('d', curve(th, SPAN));
+        el.solid.setAttribute('d', curve(th, a));
+
+        const dx = wx(a), dy = wy(a, th);
+        el.dot.setAttribute('cx', f(dx));
+        el.dot.setAttribute('cy', f(dy));
+        el.guide.setAttribute('x1', String(X0));
+        el.guide.setAttribute('y1', f(dy));
+        el.guide.setAttribute('x2', f(dx));
+        el.guide.setAttribute('y2', f(dy));
+
+        // Panah periode T: dari puncak ke puncak
+        const x1 = (((90 - th) % 360) + 360) % 360;
+        const p1 = wx(x1), p2 = wx(x1 + 360), mid = (p1 + p2) / 2, ay = 28;
+        el.tl.setAttribute('x1', f(mid)); el.tl.setAttribute('x2', f(p1 + 1)); el.tl.setAttribute('y1', String(ay)); el.tl.setAttribute('y2', String(ay));
+        el.tr.setAttribute('x1', f(mid)); el.tr.setAttribute('x2', f(p2 - 1)); el.tr.setAttribute('y1', String(ay)); el.tr.setAttribute('y2', String(ay));
+        el.tg1.setAttribute('x1', f(p1)); el.tg1.setAttribute('x2', f(p1));
+        el.tg2.setAttribute('x1', f(p2)); el.tg2.setAttribute('x2', f(p2));
+        el.tLabel.setAttribute('x', f(mid));
+
+        // Pembacaan angka
+        const s = Math.sin(r);
+        el.thetaOut.textContent = th + '°';
+        el.wtOut.textContent = Math.round(a) + '°';
+        el.phiOut.textContent = Math.round(phi) + '°';
+        el.vOut.textContent = (s >= 0 ? '+' : '−') + Math.abs(s).toFixed(2).replace('.', ',') + ' Vm';
+      }
+
+      function setPlaying(p) {
+        sim.playing = p;
+        last = null;
+        el.icoPause.classList.toggle('hidden', !p);
+        el.icoPlay.classList.toggle('hidden', p);
+        el.playText.textContent = p ? 'Pause' : 'Play';
+        el.play.setAttribute('aria-label', p ? 'Jeda animasi' : 'Putar animasi');
+      }
+
+      el.play.addEventListener('click', () => setPlaying(!sim.playing));
+      el.slider.addEventListener('input', () => {
+        sim.theta = Number(el.slider.value) || 0;
+        render();
+      });
+
+      function tick(ts) {
+        if (sim.playing && !theoryView.classList.contains('hidden')) {
+          if (last !== null) {
+            const dt = Math.min(ts - last, 100);
+            sim.alpha = (sim.alpha + (SPEED * dt) / 1000) % SPAN;
+            render();
+          }
+          last = ts;
+        } else {
+          last = null;
+        }
+        requestAnimationFrame(tick);
+      }
+
+      // Hormati preferensi "kurangi gerakan"
+      if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) sim.playing = false;
+      setPlaying(sim.playing);
+      render();
+      requestAnimationFrame(tick);
+    })();
+
+    /* ---------- Pencarian glosarium ---------- */
+    (function initGlossary() {
+      const input = document.getElementById('glossary-search');
+      const body = document.getElementById('glossary-body');
+      const empty = document.getElementById('glossary-empty');
+      if (!input || !body || !empty) return;
+
+      // Teks baris tanpa duplikat MathML dari KaTeX
+      function rowText(row) {
+        const clone = row.cloneNode(true);
+        clone.querySelectorAll('.katex-mathml').forEach((n) => n.remove());
+        return clone.textContent.replace(/\s+/g, ' ').toLowerCase();
+      }
+
+      input.addEventListener('input', () => {
+        const q = input.value.trim().toLowerCase();
+        let shown = 0;
+        body.querySelectorAll('tr').forEach((row) => {
+          const match = !q || rowText(row).includes(q);
+          row.classList.toggle('hidden', !match);
+          if (match) shown++;
+        });
+        empty.classList.toggle('hidden', shown !== 0);
+      });
+    })();
+
+    /* ---------- Render KaTeX ---------- */
+    window.addEventListener('DOMContentLoaded', () => {
+      if (typeof renderMathInElement !== 'function') return;
+      renderMathInElement(document.getElementById('theory-view'), {
+        delimiters: [
+          { left: '\\[', right: '\\]', display: true },
+          { left: '\\(', right: '\\)', display: false },
+          { left: '$$', right: '$$', display: true },
+        ],
+        throwOnError: false,
+      });
+    });
+
+    renderAuth();
+
+    /* ========================================================
+       KUIS
+       ======================================================== */
+    (function initQuiz() {
+      const root = document.getElementById('quiz-root');
+      if (!root) return;
+
+      const KEY_BEST = 'vlab-quiz-best';
+      const MAX_Q = 10;
+      const TAU = 2 * Math.PI;
+
+      const rnd = (a) => a[Math.floor(Math.random() * a.length)];
+      const shuffle = (a) => {
+        const b = a.slice();
+        for (let i = b.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [b[i], b[j]] = [b[j], b[i]];
+        }
+        return b;
+      };
+      const fm = (x) => Number(x).toLocaleString('id-ID', { maximumSignificantDigits: 4 });
+
+      /* ---------- Pembuat soal ---------- */
+      // Mengembalikan null bila ada dua opsi yang teksnya sama (pembangkit akan mengulang)
+      function build(q, correct, wrongs, exp) {
+        const texts = [correct.t, ...wrongs.map((w) => w.t)];
+        if (new Set(texts).size !== texts.length) return null;
+        const opts = shuffle([{ t: correct.t, ok: true }, ...wrongs.map((w) => ({ t: w.t, why: w.why || '' }))]);
+        return { q, opts, ans: opts.findIndex((o) => o.ok), exp };
+      }
+      const gen = (fn) => {
+        for (let i = 0; i < 30; i++) { const r = fn(); if (r) return r; }
+        return null;
+      };
+      // Soal konsep tetap: S_(pertanyaan, jawaban benar, [[opsi salah, alasan], ...], pembahasan)
+      const S_ = (q, c, w, exp) => () => build(q, { t: c }, w.map((x) => ({ t: x[0], why: x[1] })), exp);
+
+      /* ---------- Soal hitungan (angka diacak) ---------- */
+      function genXL() {
+        const L = rnd([10, 47, 100, 220, 470]), f = rnd([50, 60, 100, 200]);
+        const XL = TAU * f * L / 1000;
+        return build(
+          `Sebuah induktor \\(L = ${L}\\ \\text{mH}\\) dipasang pada sumber AC berfrekuensi \\(f = ${f}\\ \\text{Hz}\\). Berapa reaktansi induktifnya?`,
+          { t: `${fm(XL)} Ω` },
+          [
+            { t: `${fm(f * L / 1000)} Ω`, why: 'Kamu lupa faktor \\(2\\pi\\) pada \\(\\omega = 2\\pi f\\).' },
+            { t: `${fm(TAU * f * L)} Ω`, why: 'Kamu lupa mengubah mH menjadi H (dibagi 1000).' },
+            { t: `${fm(1 / (TAU * f * L / 1000))} Ω`, why: 'Itu rumus yang terbalik (mirip \\(X_C\\)). \\(X_L\\) naik bersama frekuensi, bukan turun.' }
+          ],
+          `\\(X_L = 2\\pi f L = 2\\pi \\times ${f} \\times ${L}\\times 10^{-3} = ${fm(XL)}\\ \\Omega\\)`
+        );
+      }
+
+      function genXC() {
+        const C = rnd([10, 22, 47, 100]), f = rnd([50, 60, 100, 200]);
+        const XC = 1e6 / (TAU * f * C);
+        return build(
+          `Sebuah kapasitor \\(C = ${C}\\ \\mu\\text{F}\\) dipasang pada sumber AC berfrekuensi \\(f = ${f}\\ \\text{Hz}\\). Berapa reaktansi kapasitifnya?`,
+          { t: `${fm(XC)} Ω` },
+          [
+            { t: `${fm(1e6 / (f * C))} Ω`, why: 'Kamu lupa faktor \\(2\\pi\\) pada \\(\\omega = 2\\pi f\\).' },
+            { t: `${fm(1 / (TAU * f * C))} Ω`, why: 'Kamu lupa mengubah µF menjadi F (dikali \\(10^{-6}\\)).' },
+            { t: `${fm(TAU * f * C / 1e6)} Ω`, why: 'Kamu tidak membalik: \\(X_C = 1/(\\omega C)\\), bukan \\(\\omega C\\).' }
+          ],
+          `\\(X_C = \\dfrac{1}{2\\pi f C} = \\dfrac{1}{2\\pi \\times ${f} \\times ${C}\\times 10^{-6}} = ${fm(XC)}\\ \\Omega\\)`
+        );
+      }
+
+      function genVrms() {
+        const Vm = rnd([100, 141, 200, 311, 400]);
+        const Vr = Vm / Math.SQRT2;
+        return build(
+          `Tegangan AC sinusoidal memiliki nilai puncak \\(V_m = ${Vm}\\ \\text{V}\\). Berapa nilai RMS-nya?`,
+          { t: `${fm(Vr)} V` },
+          [
+            { t: `${fm(Vm * Math.SQRT2)} V`, why: 'Kamu mengalikan dengan \\(\\sqrt{2}\\); seharusnya dibagi.' },
+            { t: `${fm(Vm / 2)} V`, why: 'Kamu membagi dengan 2; faktor yang benar adalah \\(\\sqrt{2}\\).' },
+            { t: `${fm(2 * Vm / Math.PI)} V`, why: 'Itu nilai rata-rata setengah periode (\\(2V_m/\\pi\\)), bukan RMS.' }
+          ],
+          `\\(V_{rms} = \\dfrac{V_m}{\\sqrt{2}} = \\dfrac{${Vm}}{1{,}414} = ${fm(Vr)}\\ \\text{V}\\)`
+        );
+      }
+
+      function genZseri() {
+        const R = rnd([47, 100, 220, 470]), L = rnd([47, 100, 220]), C = rnd([10, 22, 47]), f = rnd([50, 100, 200]);
+        const XL = TAU * f * L / 1000, XC = 1e6 / (TAU * f * C), X = XL - XC;
+        const Z = Math.sqrt(R * R + X * X);
+        return build(
+          `Rangkaian seri RLC: \\(R = ${R}\\ \\Omega\\), \\(L = ${L}\\ \\text{mH}\\), \\(C = ${C}\\ \\mu\\text{F}\\), pada \\(f = ${f}\\ \\text{Hz}\\). Berapa impedansi totalnya?`,
+          { t: `${fm(Z)} Ω` },
+          [
+            { t: `${fm(Math.sqrt(R * R + Math.pow(XL + XC, 2)))} Ω`, why: 'Kamu menjumlahkan \\(X_L + X_C\\). Keduanya berlawanan, jadi dikurangkan: \\(X = X_L - X_C\\).' },
+            { t: `${fm(R + Math.abs(X))} Ω`, why: 'R dan X tidak boleh dijumlahkan langsung. Keduanya saling tegak lurus, gunakan Pythagoras.' },
+            { t: `${fm(Math.abs(X))} Ω`, why: 'Kamu lupa memasukkan resistansi R ke dalam akar.' }
+          ],
+          `\\(X_L = ${fm(XL)}\\ \\Omega,\\quad X_C = ${fm(XC)}\\ \\Omega,\\quad X = X_L - X_C = ${fm(X)}\\ \\Omega\\)<br>\\(Z = \\sqrt{R^2 + X^2} = \\sqrt{${R}^2 + (${fm(X)})^2} = ${fm(Z)}\\ \\Omega\\)`
+        );
+      }
+
+      function genF0() {
+        const L = rnd([47, 100, 220, 470]), C = rnd([10, 22, 47, 100]);
+        const Ls = L / 1000, Cs = C / 1e6;
+        const f0 = 1 / (TAU * Math.sqrt(Ls * Cs));
+        return build(
+          `Rangkaian seri RLC memiliki \\(L = ${L}\\ \\text{mH}\\) dan \\(C = ${C}\\ \\mu\\text{F}\\). Berapa frekuensi resonansinya?`,
+          { t: `${fm(f0)} Hz` },
+          [
+            { t: `${fm(1 / Math.sqrt(Ls * Cs))} Hz`, why: 'Itu \\(\\omega_0\\) dalam rad/s. Untuk \\(f_0\\) dalam Hz masih harus dibagi \\(2\\pi\\).' },
+            { t: `${fm(1 / (TAU * Ls * Cs))} Hz`, why: 'Kamu lupa tanda akar pada \\(\\sqrt{LC}\\).' },
+            { t: `${fm(1 / (TAU * Math.sqrt(Ls * C)))} Hz`, why: 'Kamu lupa mengubah µF menjadi F.' }
+          ],
+          `\\(f_0 = \\dfrac{1}{2\\pi\\sqrt{LC}} = \\dfrac{1}{2\\pi\\sqrt{${L}\\times 10^{-3} \\times ${C}\\times 10^{-6}}} = ${fm(f0)}\\ \\text{Hz}\\)`
+        );
+      }
+
+      /* ---------- Bank soal contoh (tahap 1) ---------- */
+      const LEVELS = {
+        mudah: {
+          label: 'Mudah', desc: 'Konsep dan istilah (Bab 1-5)', icon: 'sprout',
+          makers: [
+            S_('Pada induktor ideal, bagaimana hubungan fase antara tegangan dan arus?',
+              'Tegangan mendahului arus 90°',
+              [['Arus mendahului tegangan 90°', 'Itu sifat kapasitor (ICE), bukan induktor.'],
+               ['Tegangan dan arus sefase', 'Sefase adalah sifat resistor.'],
+               ['Tegangan tertinggal arus 45°', 'Pada komponen ideal selisih fasenya 90°, bukan 45°.']],
+              'Ingat singkatan <strong>ELI</strong>: <em>E</em> (tegangan) mendahului <em>I</em> (arus) pada <em>L</em>. Lihat Bab 5.'),
+            S_('Pada kapasitor ideal, bagaimana hubungan fase antara tegangan dan arus?',
+              'Arus mendahului tegangan 90°',
+              [['Tegangan mendahului arus 90°', 'Itu sifat induktor (ELI), bukan kapasitor.'],
+               ['Tegangan dan arus sefase', 'Sefase adalah sifat resistor.'],
+               ['Arus tertinggal tegangan 90°', 'Arahnya terbalik. Pada kapasitor arus yang lebih dulu.']],
+              'Ingat singkatan <strong>ICE</strong>: <em>I</em> (arus) mendahului <em>E</em> (tegangan) pada <em>C</em>. Lihat Bab 5.'),
+            S_('Mengapa transformator hanya dapat bekerja pada arus AC?',
+              'Karena fluks magnet harus berubah-ubah agar timbul GGL induksi',
+              [['Karena arus DC tidak dapat mengalir pada kawat tembaga', 'DC bisa mengalir di tembaga. Masalahnya ada pada fluks magnet yang konstan.'],
+               ['Karena tegangan AC selalu lebih tinggi daripada DC', 'Tinggi rendah tegangan tidak ditentukan oleh jenis arusnya.'],
+               ['Karena kumparan trafo dibuat dari bahan khusus AC', 'Bahan kumparannya tidak berbeda. Pada DC fluksnya konstan sehingga tidak ada GGL induksi.']],
+              'Menurut Hukum Faraday, GGL induksi timbul bila fluks <em>berubah</em>. Arus AC menghasilkan fluks yang terus berubah, arus DC tidak. Lihat Bab 1.'),
+            S_('Angka 220 V pada listrik PLN merupakan nilai...',
+              'RMS (efektif)',
+              [['Puncak (\\(V_m\\))', 'Nilai puncaknya \\(220\\sqrt{2} \\approx 311\\ \\text{V}\\).'],
+               ['Rata-rata satu periode', 'Rata-rata satu periode gelombang sinus adalah nol.'],
+               ['Puncak ke puncak', 'Nilai puncak ke puncak sekitar 622 V.']],
+              'Tegangan listrik rumah dinyatakan dalam nilai efektif (RMS), yaitu setara DC yang menghasilkan panas yang sama. Lihat Bab 3.'),
+            S_('Berapa nilai rata-rata tegangan sinusoidal selama satu periode penuh?',
+              '0',
+              [['\\(V_m/\\sqrt{2}\\)', 'Itu nilai RMS, bukan rata-rata.'],
+               ['\\(2V_m/\\pi\\)', 'Itu rata-rata untuk setengah periode saja.'],
+               ['\\(V_m\\)', 'Itu nilai puncak.']],
+              'Separuh periode positif dan separuh negatif sama besar sehingga saling menghilangkan. Lihat Bab 3.')
+          ]
+        },
+        sedang: {
+          label: 'Sedang', desc: 'Hitungan satu langkah (Bab 2-5)', icon: 'flame',
+          makers: [
+            genXL, genXC, genVrms,
+            S_('Tegangan \\(v(t) = 120\\sin(314t + 20^\\circ)\\ \\text{V}\\) dinyatakan dalam phasor (acuan cosinus) menjadi...',
+              '\\(120\\angle{-70^\\circ}\\ \\text{V}\\)',
+              [['\\(120\\angle 20^\\circ\\ \\text{V}\\)', 'Kamu lupa mengubah sinus ke cosinus lebih dulu.'],
+               ['\\(120\\angle 110^\\circ\\ \\text{V}\\)', 'Arah pergeserannya terbalik: \\(\\sin x = \\cos(x - 90^\\circ)\\), bukan \\(x + 90^\\circ\\).'],
+               ['\\(\\dfrac{120}{\\sqrt{2}}\\angle{-70^\\circ}\\ \\text{V}\\)', 'Pada konvensi phasor di modul ini, panjang phasor adalah amplitudo \\(V_m\\), bukan RMS.']],
+              'Ubah ke cosinus: \\(120\\sin(314t+20^\\circ) = 120\\cos(314t + 20^\\circ - 90^\\circ) = 120\\cos(314t - 70^\\circ)\\). Maka \\(\\mathbf{V} = 120\\angle{-70^\\circ}\\). Lihat Bab 4.')
+          ]
+        },
+        sulit: {
+          label: 'Sulit', desc: 'Hitungan bertahap (Bab 5-7)', icon: 'mountain',
+          makers: [
+            genZseri, genF0,
+            S_('Pada resonansi rangkaian seri RLC, pernyataan manakah yang benar?',
+              'Impedansi minimum, arus maksimum, dan tegangan-arus sefase',
+              [['Impedansi maksimum dan arus minimum', 'Itu ciri resonansi paralel. Pada seri justru impedansinya minimum.'],
+               ['\\(X_L = 0\\) sehingga induktor tidak berpengaruh', 'Yang terjadi adalah \\(X_L = X_C\\), bukan \\(X_L = 0\\).'],
+               ['Arus mendahului tegangan 90°', 'Itu sifat kapasitor murni. Saat resonansi \\(\\varphi = 0\\).']],
+              'Saat \\(X_L = X_C\\), keduanya saling meniadakan, sehingga \\(Z = R\\) (minimum), \\(I = V/R\\) (maksimum), dan \\(\\varphi = 0\\). Lihat Bab 7.')
+          ]
+        }
+      };
+
+      /* ---------- Penyimpanan skor terbaik ---------- */
+      function loadBest() {
+        try { return JSON.parse(localStorage.getItem(KEY_BEST)) || {}; } catch (e) { return {}; }
+      }
+      function saveBest(level, s, n) {
+        const all = loadBest();
+        const old = all[level];
+        if (!old || s / n > old.s / old.n) {
+          all[level] = { s, n };
+          try { localStorage.setItem(KEY_BEST, JSON.stringify(all)); } catch (e) {}
+        }
+      }
+
+      /* ---------- State ---------- */
+      const S = { level: null, qs: [], i: 0, score: 0, chosen: null, wrong: [] };
+
+      function startSession(level) {
+        const qs = LEVELS[level].makers.map(gen).filter(Boolean);
+        S.level = level;
+        S.qs = shuffle(qs).slice(0, MAX_Q);
+        S.i = 0; S.score = 0; S.chosen = null; S.wrong = [];
+        renderQuestion();
+      }
+
+           /* ---------- Tampilan ---------- */
+      const META = {
+        mudah:  { tone: 'emerald', bars: 1, bab: 'Bab 1-5', desc: 'Konsep dan istilah' },
+        sedang: { tone: 'amber',   bars: 2, bab: 'Bab 2-5', desc: 'Hitungan satu langkah' },
+        sulit:  { tone: 'rose',    bars: 3, bab: 'Bab 5-7', desc: 'Hitungan bertahap' }
+      };
+      const TONE = {
+        emerald: { soft: 'bg-emerald-100 dark:bg-emerald-500/15', icon: 'text-emerald-500', grad: 'from-emerald-400 to-emerald-500', text: 'text-emerald-600 dark:text-emerald-400', hover: 'hover:border-emerald-400', bar: 'bg-emerald-500', chip: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-400' },
+        amber:   { soft: 'bg-amber-100 dark:bg-amber-500/15',     icon: 'text-amber-500',   grad: 'from-amber-400 to-amber-500',     text: 'text-amber-600 dark:text-amber-400',     hover: 'hover:border-amber-400',   bar: 'bg-amber-500',   chip: 'bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400' },
+        rose:    { soft: 'bg-rose-100 dark:bg-rose-500/15',       icon: 'text-rose-500',    grad: 'from-rose-400 to-rose-500',       text: 'text-rose-600 dark:text-rose-400',       hover: 'hover:border-rose-400',    bar: 'bg-rose-500',    chip: 'bg-rose-100 text-rose-700 dark:bg-rose-500/15 dark:text-rose-400' }
+      };
+
+      const CARD = 'bg-white dark:bg-slate-800 rounded-2xl border border-slate-200 dark:border-slate-700 shadow-sm';
+      const OPT_BASE = 'w-full text-left flex items-start gap-3 rounded-2xl border-2 px-4 py-3 font-semibold';
+      const OPT = OPT_BASE + ' border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 hover:border-sky-400 hover:-translate-y-0.5 transition-all focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500';
+      const OPT_OK = OPT_BASE + ' border-emerald-500 bg-emerald-50 dark:bg-emerald-500/10';
+      const OPT_BAD = OPT_BASE + ' border-rose-500 bg-rose-50 dark:bg-rose-500/10';
+      const OPT_DIM = OPT_BASE + ' border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 opacity-50';
+      const BADGE_BASE = 'shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-extrabold';
+      const BADGE = BADGE_BASE + ' bg-slate-100 dark:bg-slate-700';
+      const BADGE_OK = BADGE_BASE + ' bg-emerald-500 text-white';
+      const BADGE_BAD = BADGE_BASE + ' bg-rose-500 text-white';
+      const LETTERS = ['A', 'B', 'C', 'D'];
+
+      const SVG_ATTR = 'viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"';
+      const ICON_CHECK = `<svg class="w-5 h-5" ${SVG_ATTR}><polyline points="20 6 9 17 4 12"/></svg>`;
+      const ICON_X = `<svg class="w-5 h-5" ${SVG_ATTR}><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>`;
+      const star = (filled, cls, style) =>
+        `<svg viewBox="0 0 24 24" class="${cls}" style="${style || ''}"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2" fill="${filled ? '#f59e0b' : 'none'}" stroke="${filled ? '#f59e0b' : '#94a3b8'}" stroke-width="1.5" stroke-linejoin="round"/></svg>`;
+
+      function paint(html, after) {
+        root.innerHTML = html;
+        if (window.lucide) lucide.createIcons();
+        if (window.renderMathInElement) {
+          renderMathInElement(root, {
+            delimiters: [
+              { left: '\\[', right: '\\]', display: true },
+              { left: '\\(', right: '\\)', display: false }
+            ],
+            throwOnError: false
+          });
+        }
+        if (after) after();
+      }
+
+      function confetti() {
+        if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+        const cols = ['#0ea5e9', '#f59e0b', '#10b981', '#f43f5e', '#8b5cf6'];
+        for (let i = 0; i < 70; i++) {
+          const d = document.createElement('div');
+          d.className = 'confetti';
+          d.style.left = (Math.random() * 100) + 'vw';
+          d.style.background = cols[i % cols.length];
+          d.style.borderRadius = Math.random() > 0.5 ? '50%' : '2px';
+          d.style.animationDuration = (2.2 + Math.random() * 2) + 's';
+          d.style.animationDelay = (Math.random() * 0.6) + 's';
+          document.body.appendChild(d);
+          setTimeout(() => d.remove(), 5500);
+        }
+      }
+
+      function renderStart() {
+        const u = (typeof getUser === 'function') ? getUser() : null;
+        const best = loadBest();
+        const cards = Object.keys(LEVELS).map((k) => {
+          const lv = LEVELS[k], m = META[k], t = TONE[m.tone], b = best[k];
+          const n = Math.min(MAX_Q, lv.makers.length);
+          const bars = [1, 2, 3].map((i) =>
+            `<span class="h-2 w-5 rounded-full ${i <= m.bars ? t.bar : 'bg-slate-200 dark:bg-slate-700'}"></span>`).join('');
+          return `
+            <button type="button" data-act="start" data-level="${k}"
+              class="${CARD} ${t.hover} p-6 text-left flex flex-col h-full group hover:-translate-y-1 hover:shadow-lg transition-all duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-sky-500">
+              <div class="flex items-start justify-between">
+                <div class="w-14 h-14 rounded-2xl ${t.soft} flex items-center justify-center">
+                  <i data-lucide="${lv.icon}" class="w-7 h-7 ${t.icon} group-hover:scale-110 transition-transform"></i>
+                </div>
+                <div class="flex gap-1 mt-2" title="Tingkat kesulitan">${bars}</div>
+              </div>
+              <h2 class="text-xl font-extrabold mt-4">${lv.label}</h2>
+              <div class="flex flex-wrap gap-1.5 mt-2">
+                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold ${t.chip}">${m.bab}</span>
+                <span class="px-2.5 py-0.5 rounded-full text-[11px] font-extrabold bg-slate-100 dark:bg-slate-700 text-slate-600 dark:text-slate-300">${n} soal</span>
+              </div>
+              <p class="text-sm text-slate-600 dark:text-slate-400 mt-3">${m.desc}</p>
+              <p class="mt-auto pt-5 text-xs font-bold ${b ? t.text : 'text-slate-400'}">
+                ${b ? 'Skor terbaik: ' + b.s + '/' + b.n : 'Belum dicoba'}
+              </p>
+            </button>`;
+        }).join('');
+        paint(`
+          <p class="text-slate-600 dark:text-slate-400 mb-6">${u ? 'Halo, ' + u.name + '! ' : ''}Pilih tingkat kesulitan. Setiap sesi berisi maksimal ${MAX_Q} soal pilihan ganda dengan pembahasan langsung.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 items-stretch">${cards}</div>`);
+      }
+
+      function renderQuestion() {
+        const q = S.qs[S.i], n = S.qs.length;
+        const t = TONE[META[S.level].tone];
+        const answered = S.chosen !== null;
+        const enter = S._lastQ !== q;   // animasi masuk hanya untuk soal baru
+        S._lastQ = q;
+
+        const opts = q.opts.map((o, k) => {
+          let cls = OPT, badge = BADGE, mark = '', anim = '';
+          if (answered) {
+            if (k === q.ans) {
+              cls = OPT_OK; badge = BADGE_OK; anim = 'opt-pop';
+              mark = `<span class="ml-auto shrink-0 text-emerald-500">${ICON_CHECK}</span>`;
+            } else if (k === S.chosen) {
+              cls = OPT_BAD; badge = BADGE_BAD; anim = 'opt-shake';
+              mark = `<span class="ml-auto shrink-0 text-rose-500">${ICON_X}</span>`;
+            } else {
+              cls = OPT_DIM;
+            }
+          }
+          return `<button type="button" data-act="choose" data-k="${k}" class="${cls} ${anim}" ${answered ? 'disabled' : ''}>
+            <span class="${badge}">${LETTERS[k]}</span><span class="pt-1">${o.t}</span>${mark}</button>`;
+        }).join('');
+
+        let fb = '';
+        if (answered) {
+          const ok = S.chosen === q.ans;
+          const why = !ok && q.opts[S.chosen].why ? `<p class="mt-1">${q.opts[S.chosen].why}</p>` : '';
+          fb = `
+            <div class="q-in mt-5 rounded-2xl p-4 ${ok ? 'bg-emerald-50 dark:bg-emerald-500/10 border border-emerald-300 dark:border-emerald-500/40' : 'bg-rose-50 dark:bg-rose-500/10 border border-rose-300 dark:border-rose-500/40'}">
+              <p class="font-extrabold ${ok ? 'text-emerald-700 dark:text-emerald-400' : 'text-rose-700 dark:text-rose-400'}">${ok ? 'Benar! Keren.' : 'Kurang tepat, tidak apa-apa.'}</p>
+              ${why}
+              <p class="mt-2 text-sm"><strong>Pembahasan:</strong> ${q.exp}</p>
+            </div>
+            <div class="q-in mt-5 text-right">
+              <button type="button" data-act="next"
+                class="bg-sky-500 text-white rounded-full px-7 py-2.5 font-bold shadow-md shadow-sky-500/30 hover:scale-105 transition-transform focus:outline-none focus-visible:ring-4 focus-visible:ring-sky-300/60">
+                ${S.i + 1 < n ? 'Lanjut' : 'Lihat Hasil'}
+              </button>
+            </div>`;
+        }
+
+        const pct = ((S.i + (answered ? 1 : 0)) / n) * 100;
+        paint(`
+          <div class="flex items-center justify-between gap-2 mb-3">
+            <span class="px-3 py-1 rounded-full text-xs font-extrabold ${t.chip}">${LEVELS[S.level].label}</span>
+            <span class="text-sm font-bold text-slate-500 dark:text-slate-400">Soal ${S.i + 1} dari ${n}</span>
+            <span class="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400">${star(true, 'w-4 h-4')} ${S.score}</span>
+          </div>
+          <div class="h-3 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden mb-6">
+            <div class="h-full rounded-full bg-gradient-to-r ${t.grad} transition-all duration-500" style="width:${pct}%"></div>
+          </div>
+          <div class="${CARD} p-6 md:p-8 ${enter ? 'q-in' : ''}">
+            <div class="flex items-start gap-4 mb-6">
+              <div class="shrink-0 w-11 h-11 rounded-xl bg-gradient-to-br ${t.grad} text-white flex items-center justify-center text-lg font-extrabold shadow-md">${S.i + 1}</div>
+              <p class="text-lg font-bold leading-relaxed pt-1">${q.q}</p>
+            </div>
+            <div class="space-y-3">${opts}</div>
+            ${fb}
+          </div>`);
+      }
+
+      function renderResult() {
+        const n = S.qs.length, s = S.score;
+        const t = TONE[META[S.level].tone];
+        const prev = loadBest()[S.level];
+        const newRecord = !!prev && s / n > prev.s / prev.n;
+        saveBest(S.level, s, n);
+
+        const u = (typeof getUser === 'function') ? getUser() : null;
+        const pct = s / n;
+        const stars = pct >= 0.8 ? 3 : pct >= 0.5 ? 2 : s > 0 ? 1 : 0;
+        const col = pct >= 0.8 ? '#10b981' : pct >= 0.5 ? '#f59e0b' : '#f43f5e';
+        const msg = pct >= 0.8 ? 'Mantap, pemahamanmu sudah kuat!'
+          : pct >= 0.5 ? 'Lumayan. Cek pembahasan di bawah, lalu coba lagi.'
+          : 'Belum maksimal. Buka lagi Modul Teori, lalu coba lagi.';
+        const C = 2 * Math.PI * 52;
+
+        const starRow = [0, 1, 2].map((i) =>
+          i < stars ? star(true, 'w-12 h-12 star-pop', `animation-delay:${(0.5 + i * 0.3).toFixed(1)}s`) : star(false, 'w-12 h-12', '')
+        ).join('');
+
+        const review = S.wrong.length === 0
+          ? '<p class="text-center font-bold text-emerald-600 dark:text-emerald-400">Semua jawabanmu benar!</p>'
+          : '<h3 class="font-extrabold">Pembahasan soal yang salah</h3>' + S.wrong.map((w, idx) => `
+              <div class="${CARD} p-5">
+                <p class="text-xs font-extrabold text-rose-500 mb-1">Soal salah ${idx + 1}</p>
+                <p class="font-bold mb-3">${w.q.q}</p>
+                <p class="text-sm"><span class="font-bold text-rose-600 dark:text-rose-400">Jawabanmu:</span> ${w.q.opts[w.chosen].t}</p>
+                <p class="text-sm"><span class="font-bold text-emerald-600 dark:text-emerald-400">Jawaban benar:</span> ${w.q.opts[w.q.ans].t}</p>
+                <p class="text-sm mt-2"><strong>Pembahasan:</strong> ${w.q.exp}</p>
+              </div>`).join('');
+
+        paint(`
+          <div class="${CARD} overflow-hidden q-in">
+            <div class="h-2 bg-gradient-to-r ${t.grad}"></div>
+            <div class="p-8 text-center">
+              <p class="inline-flex items-center gap-2 text-sm font-extrabold uppercase tracking-widest text-sky-500">
+                <i data-lucide="trophy" class="w-4 h-4"></i> Hasil ${LEVELS[S.level].label}
+              </p>
+              <div class="relative w-40 h-40 mx-auto mt-5">
+                <svg viewBox="0 0 120 120" class="w-40 h-40 -rotate-90">
+                  <circle cx="60" cy="60" r="52" fill="none" stroke="currentColor" stroke-width="10" class="text-slate-200 dark:text-slate-700"/>
+                  <circle id="quiz-ring" cx="60" cy="60" r="52" fill="none" stroke="${col}" stroke-width="10" stroke-linecap="round"
+                    stroke-dasharray="${C}" stroke-dashoffset="${C}" class="ring-draw"/>
+                </svg>
+                <div class="absolute inset-0 flex flex-col items-center justify-center">
+                  <span class="text-4xl font-extrabold">${s}<span class="text-xl text-slate-400">/${n}</span></span>
+                  <span class="text-xs font-bold text-slate-500 dark:text-slate-400">${Math.round(pct * 100)}%</span>
+                </div>
+              </div>
+              <div class="flex justify-center gap-2 mt-5">${starRow}</div>
+              ${newRecord ? '<p class="mt-3 inline-block px-3 py-1 rounded-full text-xs font-extrabold bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-400">Rekor baru!</p>' : ''}
+              <p class="mt-4 text-slate-600 dark:text-slate-400">${u ? 'Skor kamu, ' + u.name + '. ' : ''}${msg}</p>
+              <div class="mt-6 flex flex-col sm:flex-row gap-3 justify-center">
+                <button type="button" data-act="start" data-level="${S.level}"
+                  class="bg-sky-500 text-white rounded-full px-7 py-2.5 font-bold shadow-md shadow-sky-500/30 hover:scale-105 transition-transform">Ulangi</button>
+                <button type="button" data-act="home"
+                  class="rounded-full px-7 py-2.5 font-bold border-2 border-sky-500 text-sky-600 dark:text-sky-400 hover:bg-sky-500 hover:text-white dark:hover:text-white transition-colors">Pilih Tingkat Lain</button>
+              </div>
+            </div>
+          </div>
+          <div class="mt-6 space-y-4">${review}</div>`,
+          () => {
+            setTimeout(() => {
+              const r = document.getElementById('quiz-ring');
+              if (r) r.style.strokeDashoffset = String(C * (1 - pct));
+            }, 60);
+            if (pct >= 0.8) confetti();
+          });
+      }
+
+      /* ---------- Interaksi ---------- */
+      root.addEventListener('click', (e) => {
+        const btn = e.target.closest('[data-act]');
+        if (!btn) return;
+        const act = btn.dataset.act;
+
+        if (act === 'start') {
+          startSession(btn.dataset.level);
+        } else if (act === 'choose') {
+          if (S.chosen !== null) return;
+          const k = Number(btn.dataset.k);
+          const q = S.qs[S.i];
+          S.chosen = k;
+          if (k === q.ans) S.score++; else S.wrong.push({ q, chosen: k });
+          renderQuestion();
+        } else if (act === 'next') {
+          if (S.i + 1 < S.qs.length) { S.i++; S.chosen = null; renderQuestion(); }
+          else renderResult();
+        } else if (act === 'home') {
+          renderStart();
+        }
+      });
+
+      // Dipanggil setiap kali halaman Kuis dibuka
+      window.vlabQuizOpen = renderStart;
+      renderStart();
+    })();
+
+        /* ========================================================
+       LOGIKA LAB RLC INTERAKTIF (SERI / PARALEL, GRAFIK, DATA)
+       ======================================================== */
+    (function initLabRLC() {
+      const labView = document.getElementById('lab-view');
+      if (!labView) return;
+
+      // --- 1. State & Konfigurasi ---
+      let isParallel = false;
+      let currentChartMode = 'time'; // 'time' atau 'freq'
+      let chartInstance = null;
+      let dataLog = [];
+      const V_peak = 10; // Tegangan sumber diasumsikan 10V
+
+      // Elemen DOM
+      const el = {
+        btnSeri: document.getElementById('btn-seri'),
+        btnParalel: document.getElementById('btn-paralel'),
+        svg: document.getElementById('circuit-svg'),
+        canvas: document.getElementById('rlcChart'),
+        caption: document.getElementById('chart-caption'),
+        tabTime: document.getElementById('tab-time'),
+        tabFreq: document.getElementById('tab-freq'),
+        btnRes: document.getElementById('btn-resonansi'),
+        btnRecord: document.getElementById('btn-record'),
+        btnClear: document.getElementById('btn-clear'),
+        tbody: document.getElementById('table-body')
+      };
+
+      // Input & Slider
+      const inputs = {
+        R: { slider: document.getElementById('sliderR'), num: document.getElementById('numR'), picker: document.getElementById('pick-R'), out: document.getElementById('outR') },
+        L: { slider: document.getElementById('sliderL'), num: document.getElementById('numL'), picker: document.getElementById('pick-L'), out: document.getElementById('outL') },
+        C: { slider: document.getElementById('sliderC'), num: document.getElementById('numC'), picker: document.getElementById('pick-C'), out: document.getElementById('outC') },
+        f: { slider: document.getElementById('sliderF'), num: document.getElementById('numF'), picker: null, out: document.getElementById('outF') }
+      };
+
+      // Output Hasil
+      const out = {
+        XL: document.getElementById('outXL'), XC: document.getElementById('outXC'),
+        Z: document.getElementById('outZ'), I: document.getElementById('outI'),
+        phi: document.getElementById('outPhi'), type: document.getElementById('outType')
+      };
+
+      // --- 2. Gambar Skema Rangkaian (SVG) ---
+            function drawCircuit() {
+        const comp = (x, y, type) => {
+          if (type === 'R') return `<path d="M ${x-20} ${y} L ${x-15} ${y} L ${x-10} ${y-10} L ${x-2} ${y+10} L ${x+6} ${y-10} L ${x+14} ${y+10} L ${x+18} ${y} L ${x+20} ${y}" fill="none" stroke="currentColor" stroke-width="2.5"/><text x="${x}" y="${y+25}" font-size="12" font-weight="bold" fill="currentColor" text-anchor="middle">R</text>`;
+          if (type === 'L') return `<path d="M ${x-15} ${y} Q ${x-10} ${y-15} ${x-5} ${y} Q ${x} ${y-15} ${x+5} ${y} Q ${x+10} ${y-15} ${x+15} ${y}" fill="none" stroke="currentColor" stroke-width="2.5"/><text x="${x}" y="${y+25}" font-size="12" font-weight="bold" fill="currentColor" text-anchor="middle">L</text>`;
+          if (type === 'C') return `<line x1="${x-10}" y1="${y-15}" x2="${x-10}" y2="${y+15}" stroke="currentColor" stroke-width="2.5"/><line x1="${x+10}" y1="${y-15}" x2="${x+10}" y2="${y+15}" stroke="currentColor" stroke-width="2.5"/><text x="${x}" y="${y+30}" font-size="12" font-weight="bold" fill="currentColor" text-anchor="middle">C</text>`;
+          if (type === 'AC') return `<circle cx="${x}" cy="${y}" r="15" fill="none" stroke="currentColor" stroke-width="2.5"/><path d="M ${x-8} ${y} Q ${x-4} ${y-8} ${x} ${y} Q ${x+4} ${y+8} ${x+8} ${y}" fill="none" stroke="currentColor" stroke-width="2"/>`;
+          return '';
+        };
+
+        let pathD = "";
+
+        if (!isParallel) {
+          // Skema SERI
+          pathD = "M 30 60 L 60 60 M 60 60 L 80 60 M 120 60 L 145 60 M 185 60 L 210 60 M 250 60 L 270 60 L 270 100 L 30 100 L 30 60";
+          el.svg.innerHTML = `
+            <path d="${pathD}" fill="none" stroke="currentColor" stroke-width="2" />
+            ${comp(30, 60, 'AC')} ${comp(100, 60, 'R')} ${comp(165, 60, 'L')} ${comp(230, 60, 'C')}
+          `;
+        } else {
+          // Skema PARALEL
+          pathD = "M 30 70 L 60 70 M 60 70 L 100 70 M 100 20 L 100 120 M 100 20 L 220 20 M 100 70 L 220 70 M 100 120 L 220 120 M 220 20 L 220 120";
+          el.svg.innerHTML = `
+            <path d="${pathD}" fill="none" stroke="currentColor" stroke-width="2" />
+            ${comp(30, 70, 'AC')} ${comp(160, 20, 'R')} ${comp(160, 70, 'L')} ${comp(160, 120, 'C')}
+          `;
+        }
+
+        // Tambahkan 3 titik elektron kuning yang beranimasi
+        el.svg.innerHTML += `
+          <circle r="3" fill="#fbbf24">
+            <animateMotion class="electron-anim" dur="2s" repeatCount="indefinite" path="${pathD}" />
+          </circle>
+          <circle r="3" fill="#fbbf24">
+            <animateMotion class="electron-anim" dur="2s" repeatCount="indefinite" begin="0.5s" path="${pathD}" />
+          </circle>
+          <circle r="3" fill="#fbbf24">
+            <animateMotion class="electron-anim" dur="2s" repeatCount="indefinite" begin="1s" path="${pathD}" />
+          </circle>
+        `;
+      }
+
+function drawPhasor(phi_deg, d) {
+  const svg = document.getElementById('phasor-svg');
+  if (!svg) return;
+  const legend = document.getElementById('phasor-legend');
+
+  const W = 320, H = 240, PAD = 46;
+  const PAD_X = 58; // [Perbaikan 3] margin horizontal lebih lebar agar label acuan tidak menabrak titik asal
+  const COL = { V: '#0ea5e9', I: '#ef4444', R: '#10b981', L: '#f59e0b', C: '#8b5cf6' };
+  const REF_COL = COL.I; // [Perbaikan 2] arus selalu merah, konsisten dengan grafik osiloskop
+  const nf = (x) => String(Number(x.toPrecision(3)));
+  const phi = phi_deg * Math.PI / 180;
+  const sym = isParallel ? 'I' : 'V';
+  const unit = isParallel ? 'A' : 'V';
+  const TINY_PX = 8;
+  const halo = document.documentElement.classList.contains('dark') ? '#1e293b' : '#ffffff';
+
+  // 1) Vektor dalam koordinat matematika (x kanan, y atas). Besaran yang SAMA di semua
+  //    komponen dijadikan acuan di sumbu horizontal: arus I (seri) atau tegangan V (paralel).
+  //    Sudut phi selalu = sudut V relatif terhadap I (positif = induktif).
+  let segs, total, ref, thT;
+  if (!isParallel) {
+    segs = [
+      { k: 'R', len: d.I * d.R,  ang: 0 },
+      { k: 'L', len: d.I * d.XL, ang: Math.PI / 2 },
+      { k: 'C', len: d.I * d.XC, ang: -Math.PI / 2 }
+    ];
+    total = { k: 'V' };
+    ref = { name: 'I (acuan)', col: REF_COL };
+    thT = phi;                 // V berada phi di atas I
+  } else {
+    segs = [
+      { k: 'R', len: V_peak / d.R,  ang: 0 },
+      { k: 'L', len: V_peak / d.XL, ang: -Math.PI / 2 },
+      { k: 'C', len: V_peak / d.XC, ang: Math.PI / 2 }
+    ];
+    total = { k: 'I' };
+    ref = { name: 'V (acuan)', col: COL.V };
+    thT = -phi;                // I berada phi di bawah V (tertinggal)
+  }
+
+  // 2) Titik-titik, lalu satu skala linear agar poligon muat di kanvas
+  const pts = [{ x: 0, y: 0 }];
+  segs.forEach((s) => {
+    const p = pts[pts.length - 1];
+    pts.push({ x: p.x + s.len * Math.cos(s.ang), y: p.y + s.len * Math.sin(s.ang) });
+  });
+  const xs = pts.map((p) => p.x), ys = pts.map((p) => p.y);
+  const minX = Math.min(...xs), maxX = Math.max(...xs), minY = Math.min(...ys), maxY = Math.max(...ys);
+  const bw = Math.max(maxX - minX, 1e-12), bh = Math.max(maxY - minY, 1e-12);
+  const k = Math.min((W - 2 * PAD_X) / bw, (H - 2 * PAD) / bh); // [Perbaikan 3]
+  const cx0 = (minX + maxX) / 2, cy0 = (minY + maxY) / 2;
+  const P = pts.map((p) => ({ x: W / 2 + (p.x - cx0) * k, y: H / 2 - (p.y - cy0) * k }));
+  const O = P[0], END = P[P.length - 1];
+  const cen = { x: P.reduce((s, p) => s + p.x, 0) / P.length, y: P.reduce((s, p) => s + p.y, 0) / P.length };
+
+  // 3) Alat gambar
+const arrow = (x1, y1, x2, y2, col, w, op = 1) => {
+  const dx = x2 - x1, dy = y2 - y1, len = Math.hypot(dx, dy);
+  if (len < 0.5) return '';
+  const ux = dx / len, uy = dy / len;
+  const h = Math.min(8, len * 0.4);
+  const bx = x2 - ux * h, by = y2 - uy * h;
+  const px = -uy * h * 0.45, py = ux * h * 0.45;
+  return `<g opacity="${op}">` +
+    `<line x1="${x1.toFixed(1)}" y1="${y1.toFixed(1)}" x2="${bx.toFixed(1)}" y2="${by.toFixed(1)}" stroke="${col}" stroke-width="${w}" stroke-linecap="round"/>` +
+    `<polygon points="${x2.toFixed(1)},${y2.toFixed(1)} ${(bx + px).toFixed(1)},${(by + py).toFixed(1)} ${(bx - px).toFixed(1)},${(by - py).toFixed(1)}" fill="${col}"/>` +
+    `</g>`;
+};
+  const normal = (mx, my, ux, uy) => {          // tegak lurus, menjauhi pusat poligon
+    let nx = uy, ny = -ux;
+    if ((mx - cen.x) * nx + (my - cen.y) * ny < 0) { nx = -nx; ny = -ny; }
+    return [nx, ny];
+  };
+  const placed = [];
+  let labels = '';
+  const text = (x, y, html, col, size, anchor) => {
+    labels += `<text x="${x.toFixed(1)}" y="${y.toFixed(1)}" font-size="${size}" font-weight="800" fill="${col}" stroke="${halo}" stroke-width="3.5" paint-order="stroke" stroke-linejoin="round" text-anchor="${anchor || 'middle'}" dominant-baseline="middle">${html}</text>`;
+  };
+  // Semua vektor diberi label; coba beberapa posisi sampai tidak bertabrakan
+  const putLabel = (mx, my, nx, ny, html, col) => {
+    const cands = [];
+    [13, 22, 31].forEach((dd) => { cands.push([mx + nx * dd, my + ny * dd], [mx - nx * dd, my - ny * dd]); });
+    const ok = (c) => c[0] > 14 && c[0] < W - 14 && c[1] > 10 && c[1] < H - 10 && !placed.some((p) => Math.hypot(p[0] - c[0], p[1] - c[1]) < 20);
+    const pick = cands.find(ok) || cands[0];
+    placed.push(pick);
+    text(pick[0], pick[1], html, col, 12);
+  };
+
+  // 4) Gambar
+  let body = `<line x1="8" y1="${O.y.toFixed(1)}" x2="${W - 8}" y2="${O.y.toFixed(1)}" stroke="${ref.col}" stroke-width="1" stroke-dasharray="4 4" opacity=".55"/>`;
+  // label acuan di kiri titik asal (sisi ini tidak pernah dilewati vektor)
+  text(6, O.y + 10, ref.name, ref.col, 10, 'start');
+  placed.push([34, O.y + 10]);
+
+  // Busur dan label sudut fase, ditempatkan lebih dulu agar label lain menghindarinya
+  const tdx = END.x - O.x, tdy = END.y - O.y, tlen = Math.hypot(tdx, tdy);
+  if (Math.abs(phi_deg) >= 2 && tlen >= 6) {
+    const th = thT, up = th > 0;
+    const r = Math.min(28, Math.max(12, tlen * 0.45));
+    const ex = O.x + r * Math.cos(th), ey = O.y - r * Math.sin(th);
+    body += `<path d="M ${(O.x + r).toFixed(1)} ${O.y.toFixed(1)} A ${r} ${r} 0 0 ${up ? 0 : 1} ${ex.toFixed(1)} ${ey.toFixed(1)}" fill="none" stroke="#8b5cf6" stroke-width="2"/>`;
+    const half = Math.abs(th) / 2;
+    const txt = `φ = ${phi_deg.toFixed(0).replace('-', '−')}°`;
+    let px, py, anc = 'middle';
+    if (Math.abs(phi_deg) >= 70) {
+      // sudut hampir 90°: wedge sempit, label di sisi kiri resultan (sisi yang selalu kosong)
+      const dd = Math.min(r + 22, tlen * 0.8);
+      px = O.x + dd * Math.cos(th) - 9;
+      py = O.y - dd * Math.sin(th);
+      anc = 'end';
+    } else if (Math.abs(phi_deg) >= 25) {
+      // sudut lebar: label di dalam segitiga, sepanjang garis bagi sudut
+      const dd = r + 14;
+      px = O.x + dd * Math.cos(half);
+      py = O.y + (up ? -1 : 1) * dd * Math.sin(half);
+    } else {
+      // sudut sempit: label tepat di sebelah busur, di sisi sumbu yang berlawanan
+      px = O.x + r + 26;
+      py = O.y + (up ? 14 : -14);
+    }
+    text(px, py, txt, '#8b5cf6', 11, anc);
+    placed.push([anc === 'end' ? px - 22 : px, py]);
+  }
+
+  // Resultan (V sumber pada seri, I total pada paralel), digambar di bawah vektor komponen
+  if (tlen >= 2) {
+    body += arrow(O.x, O.y, END.x, END.y, COL[total.k], 2);
+    const mx = (O.x + END.x) / 2, my = (O.y + END.y) / 2;
+    const [nx, ny] = normal(mx, my, tdx / tlen, tdy / tlen);
+    putLabel(mx, my, nx, ny, total.k, COL[total.k]);
+  }
+
+// Vektor komponen, digambar ujung ke pangkal (tanpa pergeseran).
+// L dan C segaris tapi berlawanan arah, jadi yang lebih panjang digambar
+// lebih tebal di bawah, yang lebih pendek lebih tipis di atasnya.
+const longLC = segs[1].len >= segs[2].len ? 1 : 2;
+[0, longLC, 3 - longLC].forEach((i) => {
+  const s = segs[i];
+  const a = P[i], b = P[i + 1];
+  const dx = b.x - a.x, dy = b.y - a.y, len = Math.hypot(dx, dy);
+  if (len < 1) return;
+  const ux = dx / len, uy = dy / len;
+  const mx = (a.x + b.x) / 2, my = (a.y + b.y) / 2;
+  const [nx, ny] = normal(mx, my, ux, uy);
+  const w = i === longLC ? 5 : 2.5;
+  body += arrow(a.x, a.y, b.x, b.y, COL[s.k], w, i === longLC ? 0.5 : 1);
+  putLabel(mx, my, nx, ny, `${sym}<tspan dy="3" font-size="9">${s.k}</tspan>`, COL[s.k]);
+});
+
+  svg.innerHTML = body + labels;
+
+  // 5) Legenda ringkas: satu daftar, nilai + bar ukuran relatif
+  if (legend) {
+    const sub = (s, kk) => `${s}<sub>${kk}</sub>`;
+    const row = (col, html, val, frac) =>
+      `<div class="flex items-center gap-2">
+         <span class="inline-block w-3 h-1.5 rounded-full shrink-0" style="background:${col}"></span>
+         <span class="w-8 shrink-0" style="color:${col}">${html}</span>
+         <span class="font-mono font-semibold text-slate-600 dark:text-slate-300 w-32 shrink-0">${val}</span>
+         ${frac === null ? '' : `<span class="flex-1 h-1.5 rounded-full bg-slate-200 dark:bg-slate-700 overflow-hidden"><span class="block h-full rounded-full" style="width:${Math.max(frac * 100, 2).toFixed(1)}%;background:${col}"></span></span>`}
+       </div>`;
+
+    const maxLen = Math.max(...segs.map((s) => s.len));
+    // Kalimat penjelas sudut fase: kata-kata + warna yang sama dengan "Sifat Rangkaian" di panel hasil
+    const pd = Math.round(phi_deg), apd = Math.abs(pd);
+    let meaning, mcls;
+    if (phi_deg > 1) {
+      meaning = `Arus <strong>tertinggal</strong> ${apd}° dari tegangan, jadi rangkaian <strong>induktif</strong> (φ = +${apd}°).`;
+      mcls = 'text-amber-500';
+    } else if (phi_deg < -1) {
+      meaning = `Arus <strong>mendahului</strong> tegangan ${apd}°, jadi rangkaian <strong>kapasitif</strong> (φ = −${apd}°).`;
+      mcls = 'text-purple-500';
+    } else {
+      meaning = 'Arus dan tegangan hampir <strong>sefase</strong>, jadi rangkaian <strong>resistif</strong> (φ ≈ 0°).';
+      mcls = 'text-emerald-500';
+    }
+    let html = `<p class="font-semibold text-slate-500 dark:text-slate-400">${isParallel
+      ? 'Acuan: V (sama di semua cabang). Disambung R → L → C = I.'
+      : 'Acuan: I (sama di semua komponen). Disambung R → L → C = V.'}</p>`;
+    html += `<p class="font-bold ${mcls}">${meaning}</p>`;
+    if (isParallel) {
+      html += row(COL.V, 'V', `${nf(V_peak)} V (acuan)`, null);
+      html += row(COL.I, 'I', `${nf(d.I)} A`, null);
+    } else {
+      html += row(COL.V, 'V', `${nf(V_peak)} V`, null);
+      html += row(REF_COL, 'I', `${nf(d.I)} A (acuan)`, null);
+    }
+    html += '<div class="border-t border-slate-200 dark:border-slate-700 my-1.5"></div>';
+    segs.forEach((s) => { html += row(COL[s.k], sub(sym, s.k), `${nf(s.len)} ${unit}`, s.len / maxLen); });
+
+    const notes = [];
+    if (Math.abs(phi_deg) < 1) {
+      notes.push(isParallel
+        ? 'Resonansi paralel: I<sub>L</sub> dan I<sub>C</sub> saling meniadakan, sehingga arus total minimum (sama dengan I<sub>R</sub>).'
+        : 'Resonansi seri: V<sub>L</sub> dan V<sub>C</sub> saling meniadakan, sehingga V sama dengan V<sub>R</sub>.');
+    } else if (isParallel && Math.max(segs[1].len, segs[2].len) > d.I * 1.001) {
+      notes.push('Normal: I<sub>L</sub> dan I<sub>C</sub> berlawanan arah, jadi saling mengurangi.');
+    } else if (!isParallel && Math.max(segs[1].len, segs[2].len) > V_peak * 1.001) {
+      notes.push('Normal: V<sub>L</sub> dan V<sub>C</sub> bisa lebih besar dari V sumber karena berlawanan arah, jadi saling mengurangi.');
+    }
+    const tiny = segs.filter((s) => s.len * k < TINY_PX).map((s) => sub(sym, s.k));
+    if (tiny.length) notes.push(`${tiny.join(', ')} sangat kecil; lihat nilainya di daftar.`);
+
+    if (notes.length) {
+      html += `<div class="mt-2 rounded-lg bg-slate-50 dark:bg-slate-900/50 border border-slate-200 dark:border-slate-700 px-3 py-2 space-y-1 font-semibold text-slate-500 dark:text-slate-400">${notes.map((n) => `<p>${n}</p>`).join('')}</div>`;
+    }
+    legend.className = 'w-full mt-3 space-y-1.5 text-xs font-bold';
+    legend.innerHTML = html;
+  }
+}
+
+      // --- 3. Hitung Fisika & Update UI ---
+      function calculate() {
+        const R = parseFloat(inputs.R.slider.value);
+        const L = parseFloat(inputs.L.slider.value) / 1000; // mH -> H
+        const C = parseFloat(inputs.C.slider.value) / 1000000; // µF -> F
+        const f = parseFloat(inputs.f.slider.value);
+        const omega = 2 * Math.PI * f;
+
+        const XL = omega * L;
+        const XC = 1 / (omega * C);
+        let Z, phi, phi_deg, I_peak;
+
+        if (!isParallel) {
+          Z = Math.sqrt((R * R) + Math.pow((XL - XC), 2));
+          phi = Math.atan2((XL - XC), R);
+          I_peak = V_peak / Z;
+        } else {
+          const Y_real = 1 / R;
+          const Y_imag = (1 / XC) - (1 / XL);
+          const Y_mag = Math.sqrt(Y_real*Y_real + Y_imag*Y_imag);
+          Z = 1 / Y_mag;
+          phi = Math.atan2(-Y_imag, Y_real); 
+          I_peak = V_peak * Y_mag; 
+        }
+        phi_deg = phi * (180 / Math.PI);
+
+        // Update Text
+        out.XL.innerText = `${XL.toFixed(1)} Ω`;
+        out.XC.innerText = `${XC.toFixed(1)} Ω`;
+        out.Z.innerText = `${Z.toFixed(1)} Ω`;
+        out.I.innerText = `${I_peak.toFixed(3)} A`;
+        out.phi.innerText = `${phi_deg.toFixed(1)}°`;
+
+        let type = "Resistif", color = "text-emerald-500";
+        if (phi_deg > 1) { type = "Induktif"; color = "text-amber-500"; }
+        else if (phi_deg < -1) { type = "Kapasitif"; color = "text-purple-500"; }
+        
+        out.type.innerText = type;
+        out.type.className = `font-bold text-base ${color}`;
+
+        updateChart(f, phi, I_peak);
+                drawPhasor(phi_deg, { R, XL, XC, I: I_peak });
+        
+        const animSpeed = Math.max(0.2, 3 - (I_peak * 2));
+        const anims = el.svg.querySelectorAll('.electron-anim');
+        anims.forEach(anim => anim.setAttribute('dur', `${animSpeed}s`));
+
+        // Render ulang rumus KaTeX di panel hasil
+        if (window.renderMathInElement) {
+          renderMathInElement(labView, {
+            delimiters: [{left: '\\(', right: '\\)', display: false}]
+          });
+        }
+
+                // Render Langkah Perhitungan ke Accordion
+        const stepsEl = document.getElementById('calc-steps');
+        if (stepsEl) {
+          const n = (x, d = 2) => Number(x).toFixed(d);
+          const Lm = inputs.L.slider.value; // mH
+          const Cu = inputs.C.slider.value; // µF
+
+          let s = `
+            <p><strong>Langkah 1: Frekuensi sudut</strong></p>
+            <p>\\(\\omega = 2\\pi f = 2\\pi \\times ${f} = ${n(omega, 1)}\\ \\text{rad/s}\\)</p>
+            <p><strong>Langkah 2: Reaktansi</strong></p>
+            <p>\\(X_L = \\omega L = ${n(omega, 1)} \\times ${Lm}\\times 10^{-3} = ${n(XL)}\\ \\Omega\\)</p>
+            <p>\\(X_C = \\dfrac{1}{\\omega C} = \\dfrac{1}{${n(omega, 1)} \\times ${Cu}\\times 10^{-6}} = ${n(XC)}\\ \\Omega\\)</p>
+          `;
+
+          if (!isParallel) {
+            const X = XL - XC;
+            s += `
+              <p><strong>Langkah 3: Reaktansi total (seri)</strong></p>
+              <p>\\(X = X_L - X_C = ${n(XL)} - ${n(XC)} = ${n(X)}\\ \\Omega\\)</p>
+              <p><strong>Langkah 4: Impedansi</strong></p>
+              <p>\\(Z = \\sqrt{R^2 + X^2} = \\sqrt{${R}^2 + (${n(X)})^2} = ${n(Z)}\\ \\Omega\\)</p>
+              <p><strong>Langkah 5: Arus</strong></p>
+              <p>\\(I = \\dfrac{V}{Z} = \\dfrac{${V_peak}}{${n(Z)}} = ${n(I_peak, 3)}\\ \\text{A}\\)</p>
+              <p><strong>Langkah 6: Beda fase</strong></p>
+              <p>\\(\\varphi = \\tan^{-1}\\dfrac{X}{R} = \\tan^{-1}\\dfrac{${n(X)}}{${R}} = ${n(phi_deg, 1)}^\\circ\\)</p>
+            `;
+          } else {
+            const YR = 1 / R, YL = 1 / XL, YC = 1 / XC;
+            const Bn = YC - YL;
+            s += `
+              <p><strong>Langkah 3: Admittansi tiap cabang</strong></p>
+              <p>\\(G = \\dfrac{1}{R} = ${n(YR * 1000, 3)}\\ \\text{mS}\\)</p>
+              <p>\\(B_L = \\dfrac{1}{X_L} = ${n(YL * 1000, 3)}\\ \\text{mS},\\quad B_C = \\dfrac{1}{X_C} = ${n(YC * 1000, 3)}\\ \\text{mS}\\)</p>
+              <p>\\(B = B_C - B_L = ${n(Bn * 1000, 3)}\\ \\text{mS}\\)</p>
+              <p><strong>Langkah 4: Admittansi dan impedansi total</strong></p>
+              <p>\\(Y = \\sqrt{G^2 + B^2} = ${n(Math.sqrt(YR * YR + Bn * Bn) * 1000, 3)}\\ \\text{mS}\\)</p>
+              <p>\\(Z = \\dfrac{1}{Y} = ${n(Z)}\\ \\Omega\\)</p>
+              <p><strong>Langkah 5: Arus tiap cabang dan total</strong></p>
+              <p>\\(I_R = \\dfrac{V}{R} = ${n(V_peak / R, 3)}\\ \\text{A},\\quad I_L = \\dfrac{V}{X_L} = ${n(V_peak / XL, 3)}\\ \\text{A},\\quad I_C = \\dfrac{V}{X_C} = ${n(V_peak / XC, 3)}\\ \\text{A}\\)</p>
+              <p>\\(I = V \\cdot Y = ${n(I_peak, 3)}\\ \\text{A}\\)</p>
+              <p><strong>Langkah 6: Beda fase</strong></p>
+              <p>\\(\\varphi = -\\tan^{-1}\\dfrac{B}{G} = ${n(phi_deg, 1)}^\\circ\\)</p>
+            `;
+          }
+
+          let kes;
+          if (Math.abs(phi_deg) <= 1) {
+            kes = 'rangkaian bersifat <strong>resistif</strong>: pengaruh L dan C saling meniadakan (mendekati resonansi), sehingga tegangan dan arus hampir sefase.';
+          } else if (phi_deg > 0) {
+            kes = isParallel
+              ? 'rangkaian bersifat <strong>induktif</strong> karena \\(I_L \\gt I_C\\): arus tertinggal dari tegangan.'
+              : 'rangkaian bersifat <strong>induktif</strong> karena \\(X_L \\gt X_C\\): arus tertinggal dari tegangan.';
+          } else {
+            kes = isParallel
+              ? 'rangkaian bersifat <strong>kapasitif</strong> karena \\(I_C \\gt I_L\\): arus mendahului tegangan.'
+              : 'rangkaian bersifat <strong>kapasitif</strong> karena \\(X_C \\gt X_L\\): arus mendahului tegangan.';
+          }
+          s += `<p class="pt-2 border-t border-slate-200 dark:border-slate-700"><strong>Kesimpulan:</strong> ${kes}</p>`;
+
+          stepsEl.innerHTML = s;
+          if (window.renderMathInElement) {
+            renderMathInElement(stepsEl, { delimiters: [{left: '\\(', right: '\\)', display: false}] });
+          }
+        }
+      } // <--- INI ADALAH PENUTUP FUNGSI calculate() 
+
+      // --- 4. Logika Chart.js (Time & Frequency Domain) ---
+      function initChart() {
+        const ctx = el.canvas.getContext('2d');
+        chartInstance = new Chart(ctx, {
+          type: 'line',
+          data: { labels: [], datasets: [] },
+          options: {
+            responsive: true, maintainAspectRatio: false, animation: { duration: 0 },
+            interaction: { intersect: false, mode: 'index' },
+            plugins: { legend: { display: true, position: 'top' } }
+          }
+        });
+        updateChartTheme();
+      }
+
+      function updateChartTheme() {
+        if (!chartInstance) return;
+        const isDark = document.documentElement.classList.contains('dark');
+        const gridColor = isDark ? '#334155' : '#e2e8f0';
+        const textColor = isDark ? '#cbd5e1' : '#475569';
+        
+        chartInstance.options.scales = {
+          x: { grid: { color: gridColor }, ticks: { color: textColor } },
+          y: { grid: { color: gridColor }, ticks: { color: textColor } }
+        };
+        chartInstance.options.plugins.legend.labels.color = textColor;
+        chartInstance.update();
+      }
+
+                  function updateChart(f, phi, I_peak) {
+        const isDark = document.documentElement.classList.contains('dark');
+        const textColor = isDark ? '#cbd5e1' : '#475569';
+        const gridColor = isDark ? '#334155' : '#e2e8f0';
+        const ttl = (text, color) => ({ display: true, text, color: color || textColor, font: { weight: 'bold' } });
+
+        if (currentChartMode === 'time') {
+          // 3 periode, jadi bentuk gelombang selalu terlihat jelas
+          const periods = 3, N = 240, T = 1 / f;
+          const labels = [], V_data = [], I_data = [];
+          for (let i = 0; i <= N; i++) {
+            const t = (periods * T * i) / N;
+            labels.push((t * 1000).toFixed(1));
+            V_data.push(V_peak * Math.sin(2 * Math.PI * f * t));
+            I_data.push(I_peak * Math.sin(2 * Math.PI * f * t - phi)); // arus asli, tanpa skala palsu
+          }
+          el.caption.innerText = 'Biru = Tegangan (sumbu kiri) | Merah = Arus (sumbu kanan, perhatikan nilainya)';
+
+          chartInstance.data = {
+            labels,
+            datasets: [
+              { label: 'Tegangan (V)', yAxisID: 'y',  borderColor: '#0ea5e9', backgroundColor: '#0ea5e9', data: V_data, borderWidth: 2, pointRadius: 0, tension: 0.3 },
+{ label: 'Arus (A)',     yAxisID: 'y1', borderColor: '#ef4444', backgroundColor: '#ef4444', data: I_data, borderWidth: 2, pointRadius: 0, tension: 0.3 }
+            ]
+          };
+          chartInstance.options.scales = {
+            x:  { title: ttl('Waktu (ms)'), grid: { color: gridColor }, ticks: { color: textColor, maxTicksLimit: 8 } },
+            y:  { position: 'left',  min: -V_peak * 1.1, max: V_peak * 1.1, title: ttl('Tegangan (V)', '#0ea5e9'), grid: { color: gridColor }, ticks: { color: '#0ea5e9' } },
+            y1: { position: 'right', min: -I_peak * 1.2, max: I_peak * 1.2, title: ttl('Arus (A)', '#ef4444'), grid: { drawOnChartArea: false }, ticks: { color: '#ef4444' } }
+          };
+        } else {
+          const R = parseFloat(inputs.R.slider.value);
+          const L = parseFloat(inputs.L.slider.value) / 1000;
+          const C = parseFloat(inputs.C.slider.value) / 1000000;
+          const STEP = 5, F_MIN = 10, F_MAX = 500;
+
+          const labels = [], I_data = [];
+          for (let fr = F_MIN; fr <= F_MAX; fr += STEP) {
+            const w = 2 * Math.PI * fr;
+            const xl = w * L, xc = 1 / (w * C);
+            let z;
+            if (!isParallel) z = Math.sqrt(R * R + Math.pow(xl - xc, 2));
+            else {
+              const Yr = 1 / R, Yi = 1 / xc - 1 / xl;
+              z = 1 / Math.sqrt(Yr * Yr + Yi * Yi);
+            }
+            labels.push(fr);
+            I_data.push(V_peak / z);
+          }
+
+          // Penanda: posisi f sekarang dan f0
+          const f0 = 1 / (2 * Math.PI * Math.sqrt(L * C));
+          const marker = (freq) => labels.map((_, i) => (i === Math.round((freq - F_MIN) / STEP) ? I_data[i] : null));
+          const datasets = [
+            { label: 'Arus (I) vs Frekuensi', borderColor: '#10b981', backgroundColor: 'rgba(16,185,129,0.1)', data: I_data, borderWidth: 3, fill: true, pointRadius: 0, tension: 0.4 },
+            { label: 'f sekarang', data: marker(f), showLine: false, borderColor: '#f59e0b', backgroundColor: '#f59e0b', pointRadius: 7 }
+          ];
+          if (f0 >= F_MIN && f0 <= F_MAX) {
+            datasets.push({ label: 'f₀ = ' + f0.toFixed(1) + ' Hz', data: marker(f0), showLine: false, borderColor: '#8b5cf6', backgroundColor: '#8b5cf6', pointRadius: 5, pointStyle: 'triangle' });
+          }
+          chartInstance.data = { labels, datasets };
+
+          el.caption.innerText = isParallel
+            ? 'Pada rangkaian paralel, resonansi ditandai arus MINIMUM (lembah kurva). Titik kuning = f saat ini.'
+            : 'Pada rangkaian seri, resonansi ditandai arus MAKSIMUM (puncak kurva). Titik kuning = f saat ini.';
+
+          chartInstance.options.scales = {
+            x: { title: ttl('Frekuensi (Hz)'), grid: { color: gridColor }, ticks: { color: textColor, maxTicksLimit: 10 } },
+            y: { title: ttl('Arus (Ampere)'),  grid: { color: gridColor }, ticks: { color: textColor } }
+          };
+        }
+
+        chartInstance.options.maintainAspectRatio = false;
+        chartInstance.update();
+      }
+
+      // --- 4b. Gambar komponen fisik pada tombol pilihan ---
+      const RES_COLORS = [
+        ['Hitam', '#111827'], ['Coklat', '#7c3f1d'], ['Merah', '#dc2626'], ['Oranye', '#f97316'],
+        ['Kuning', '#facc15'], ['Hijau', '#16a34a'], ['Biru', '#2563eb'], ['Ungu', '#7e22ce'],
+        ['Abu-abu', '#6b7280'], ['Putih', '#f8fafc']
+      ];
+      const GOLD = ['Emas', '#d4af37'];
+
+      // Kembalikan 3 gelang [digit1, digit2, pengali] atau null bila tidak ada kode standar
+      function resBands(v) {
+        let d1, d2, m;
+        if (v < 10) { d1 = v; d2 = 0; m = -1; }
+        else {
+          const s = String(Math.round(v));
+          d1 = Number(s[0]); d2 = Number(s[1]); m = s.length - 2;
+          if ((d1 * 10 + d2) * Math.pow(10, m) !== v) return null;
+        }
+        if (!Number.isInteger(d1) || d1 > 9) return null;
+        return [RES_COLORS[d1], RES_COLORS[d2], m === -1 ? GOLD : RES_COLORS[m]];
+      }
+
+      function resistorSVG(v) {
+        const b = resBands(v) || [RES_COLORS[0], RES_COLORS[0], RES_COLORS[0]];
+        const xs = [14, 20, 26];
+        const bands = b.map((c, i) => `<rect x="${xs[i]}" y="3" width="3.5" height="14" fill="${c[1]}" stroke="#00000033" stroke-width=".4"/>`).join('');
+        return `<svg width="44" height="20" viewBox="0 0 44 20" class="mb-1">
+          <line x1="0" y1="10" x2="44" y2="10" stroke="currentColor" stroke-width="2"/>
+          <rect x="8" y="3" width="28" height="14" rx="5" fill="#e7d3a1" stroke="#a8865a"/>
+          ${bands}
+          <rect x="31" y="3" width="3.5" height="14" fill="${GOLD[1]}"/>
+        </svg>`;
+      }
+
+      function inductorSVG(v) {
+        const turns = { 10: 2, 47: 3, 100: 4, 220: 5, 470: 6 }[v] || 4;
+        const w = 28 / turns;
+        let coils = '';
+        for (let i = 0; i < turns; i++) {
+          coils += `<ellipse cx="${8 + w * (i + 0.5)}" cy="12" rx="${(w * 0.45).toFixed(1)}" ry="8" fill="none" stroke="#b45309" stroke-width="2"/>`;
+        }
+        return `<svg width="44" height="24" viewBox="0 0 44 24" class="mb-1">
+          <line x1="0" y1="12" x2="44" y2="12" stroke="currentColor" stroke-width="2"/>
+          <rect x="8" y="9" width="28" height="6" rx="2" fill="#9ca3af"/>
+          ${coils}
+        </svg>`;
+      }
+
+      function capacitorSVG(v) {
+        const i = [10, 22, 47, 100].indexOf(v);
+        const w = [12, 15, 18, 22][i < 0 ? 0 : i];
+        const h = [14, 17, 20, 24][i < 0 ? 0 : i];
+        const x = 22 - w / 2, y = 26 - h;
+        return `<svg width="44" height="32" viewBox="0 0 44 32" class="mb-1">
+          <line x1="${18}" y1="26" x2="${18}" y2="32" stroke="currentColor" stroke-width="2"/>
+          <line x1="${26}" y1="26" x2="${26}" y2="32" stroke="currentColor" stroke-width="2"/>
+          <rect x="${x}" y="${y}" width="${w}" height="${h}" rx="2" fill="#1e3a8a"/>
+          <rect x="${x}" y="${y}" width="${(w * 0.28).toFixed(1)}" height="${h}" fill="#cbd5e1"/>
+          <rect x="${x}" y="${y}" width="${w}" height="3" rx="1.5" fill="#94a3b8"/>
+        </svg>`;
+      }
+
+      function buildPicker(type, values, svgFn, unitLabel) {
+        const cls = 'flex-shrink-0 flex flex-col items-center justify-center p-2 rounded-lg border border-slate-200 dark:border-slate-700 hover:border-sky-500 bg-slate-50 dark:bg-slate-900 transition-colors';
+        inputs[type].picker.innerHTML = values.map(v =>
+          `<button type="button" data-val="${v}" class="${cls}">${svgFn(v)}<span class="text-[10px] font-bold">${unitLabel(v)}</span></button>`
+        ).join('');
+      }
+
+      buildPicker('R', [10, 47, 100, 220, 470, 1000], resistorSVG, v => v >= 1000 ? (v / 1000) + 'k Ω' : v + ' Ω');
+      buildPicker('L', [10, 47, 100, 220, 470], inductorSVG, v => v + ' mH');
+      buildPicker('C', [10, 22, 47, 100], capacitorSVG, v => v + ' µF');
+
+      function updateColorCode() {
+        const p = document.getElementById('color-code');
+        if (!p) return;
+        const v = parseFloat(inputs.R.slider.value);
+        const b = resBands(v);
+        if (!b) { p.textContent = 'Nilai bebas: tidak ada kode warna standar.'; return; }
+        p.textContent = 'Kode warna: ' + b.map(c => c[0]).join(' - ') + ' (+ Emas = toleransi 5%)';
+      }
+
+      // --- 5. Sinkronisasi Input (Slider, Number, Picker) ---
+      function syncInputs(type, val) {
+        const grp = inputs[type];
+        const min = parseFloat(grp.slider.min), max = parseFloat(grp.slider.max);
+
+        // Validasi: kosong/bukan angka -> kembali ke nilai terakhir; di luar batas -> dipaksa masuk batas
+        let v = parseFloat(val);
+        const bad = !Number.isFinite(v);
+        if (bad) v = parseFloat(grp.slider.value);
+        const clamped = !bad && (v < min || v > max);
+        v = Math.round(Math.min(max, Math.max(min, v)));
+        val = v;
+
+        if (bad || clamped) {
+          const box = grp.num;
+          box.title = 'Nilai dibatasi ' + min + ' sampai ' + max;
+          box.classList.add('border-rose-500', 'ring-2', 'ring-rose-300');
+          setTimeout(() => box.classList.remove('border-rose-500', 'ring-2', 'ring-rose-300'), 900);
+        }
+
+        grp.slider.value = val;
+        grp.num.value = val;
+
+        if (grp.picker) {
+          grp.picker.querySelectorAll('button').forEach(btn => {
+            if (parseFloat(btn.dataset.val) === parseFloat(val)) {
+              btn.classList.add('border-sky-500', 'bg-sky-50', 'dark:bg-sky-500/20', 'text-sky-600', 'dark:text-sky-400');
+              btn.classList.remove('border-slate-200', 'dark:border-slate-700', 'bg-slate-50', 'dark:bg-slate-900');
+            } else {
+              btn.classList.remove('border-sky-500', 'bg-sky-50', 'dark:bg-sky-500/20', 'text-sky-600', 'dark:text-sky-400');
+              btn.classList.add('border-slate-200', 'dark:border-slate-700', 'bg-slate-50', 'dark:bg-slate-900');
+            }
+          });
+        }
+        if (typeof updateColorCode === 'function') updateColorCode();
+        calculate();
+      }
+
+      // --- 6. Event Listeners ---
+      // Toggle Mode
+      el.btnSeri.addEventListener('click', () => {
+        isParallel = false;
+        el.btnSeri.className = "px-6 py-2 rounded-lg font-bold text-sm bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-400 shadow-sm transition-all";
+        el.btnParalel.className = "px-6 py-2 rounded-lg font-bold text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-all";
+        drawCircuit(); calculate();
+      });
+
+      el.btnParalel.addEventListener('click', () => {
+        isParallel = true;
+        el.btnParalel.className = "px-6 py-2 rounded-lg font-bold text-sm bg-white dark:bg-slate-700 text-sky-600 dark:text-sky-400 shadow-sm transition-all";
+        el.btnSeri.className = "px-6 py-2 rounded-lg font-bold text-sm text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200 transition-all";
+        drawCircuit(); calculate();
+      });
+
+      // Input Sliders & Numbers
+      ['R', 'L', 'C', 'f'].forEach(type => {
+        inputs[type].slider.addEventListener('input', (e) => syncInputs(type, e.target.value));
+        inputs[type].num.addEventListener('change', (e) => syncInputs(type, e.target.value));
+      });
+
+      // Component Pickers
+      ['R', 'L', 'C'].forEach(type => {
+        if (inputs[type].picker) {
+          inputs[type].picker.addEventListener('click', (e) => {
+            const btn = e.target.closest('button');
+            if (btn) syncInputs(type, btn.dataset.val);
+          });
+        }
+      });
+
+            // Tombol Resonansi Otomatis (Anti-Error)
+      el.btnRes.addEventListener('click', () => {
+        const L = parseFloat(inputs.L.slider.value) / 1000;
+        const C = parseFloat(inputs.C.slider.value) / 1000000;
+        let f = parseFloat(inputs.f.slider.value);
+        
+        const f0 = 1 / (2 * Math.PI * Math.sqrt(L * C));
+
+        // 1. Jika f0 aman di dalam batas slider (10-500 Hz)
+        if (f0 >= 10 && f0 <= 500) { 
+          syncInputs('f', Math.round(f0));
+          return;
+        }
+
+        // 2. Jika di luar batas: Paksa resonansi di frekuensi saat ini (f) dengan mengubah nilai L.
+        let newL_H = 1 / (Math.pow(2 * Math.PI * f, 2) * C);
+        let newL_mH = newL_H * 1000;
+
+        if (newL_mH >= 10 && newL_mH <= 1000) {
+          syncInputs('L', Math.round(newL_mH));
+          alert(`Frekuensi resonansi (${f0.toFixed(1)} Hz) di luar batas. Sistem mengubah Induktansi menjadi ${Math.round(newL_mH)} mH agar resonansi terjadi di ${f} Hz.`);
+          return;
+        }
+
+        // 3. Jika ubah L tidak bisa, coba ubah C.
+        let newC_F = 1 / (Math.pow(2 * Math.PI * f, 2) * L);
+        let newC_uF = newC_F * 1000000;
+
+        if (newC_uF >= 1 && newC_uF <= 100) {
+          syncInputs('C', Math.round(newC_uF));
+          alert(`Frekuensi resonansi (${f0.toFixed(1)} Hz) di luar batas. Sistem mengubah Kapasitansi menjadi ${Math.round(newC_uF)} µF agar resonansi terjadi di ${f} Hz.`);
+          return;
+        }
+
+        alert("Tidak dapat mencapai resonansi dengan batas komponen yang ada.");
+      });
+
+      // Chart Tabs
+      el.tabTime.addEventListener('click', () => {
+        currentChartMode = 'time';
+        el.tabTime.className = "px-3 py-1 rounded-md text-xs font-bold bg-white dark:bg-slate-700 shadow-sm text-sky-600 dark:text-sky-400 transition-all";
+        el.tabFreq.className = "px-3 py-1 rounded-md text-xs font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all";
+        calculate();
+      });
+
+      el.tabFreq.addEventListener('click', () => {
+        currentChartMode = 'freq';
+        el.tabFreq.className = "px-3 py-1 rounded-md text-xs font-bold bg-white dark:bg-slate-700 shadow-sm text-sky-600 dark:text-sky-400 transition-all";
+        el.tabTime.className = "px-3 py-1 rounded-md text-xs font-bold text-slate-500 hover:text-slate-700 dark:hover:text-slate-300 transition-all";
+        calculate();
+      });
+
+      // --- 7. Data Logger ---
+      el.btnRecord.addEventListener('click', () => {
+        const R = parseFloat(inputs.R.slider.value);
+        const L = parseFloat(inputs.L.slider.value);
+        const C = parseFloat(inputs.C.slider.value);
+        const f = parseFloat(inputs.f.slider.value);
+        
+        dataLog.push({
+          R, L, C, f,
+          Z: out.Z.innerText,
+          I: out.I.innerText,
+          phase: out.phi.innerText
+        });
+        
+        renderTable();
+      });
+
+      el.btnClear.addEventListener('click', () => {
+        if (confirm("Hapus semua data praktikum?")) {
+          dataLog = [];
+          renderTable();
+        }
+      });
+
+            // Ekspor CSV
+      document.getElementById('btn-export').addEventListener('click', () => {
+        if (dataLog.length === 0) {
+          alert("Belum ada data untuk diekspor!");
+          return;
+        }
+
+        // Header CSV
+        let csvContent = "No,R (Ohm),L (mH),C (uF),f (Hz),Z (Ohm),I (A),Fase (deg)\n";
+
+        // Isi Data
+        dataLog.forEach((d, i) => {
+          // Membersihkan simbol derajat dan satuan agar bisa dibaca Excel
+          const zVal = d.Z.replace(' Ω', '');
+          const iVal = d.I.replace(' A', '');
+          const phaseVal = d.phase.replace('°', '');
+          csvContent += `${i + 1},${d.R},${d.L},${d.C},${d.f},${zVal},${iVal},${phaseVal}\n`;
+        });
+
+        // Proses Download
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `Data_Praktikum_RLC_${new Date().getTime()}.csv`);
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+      });
+
+      function renderTable() {
+        el.tbody.innerHTML = dataLog.map((d, i) => `
+          <tr class="hover:bg-slate-50 dark:hover:bg-slate-800/50">
+            <td class="px-3 py-2">${i + 1}</td>
+            <td class="px-3 py-2">${d.R}</td>
+            <td class="px-3 py-2">${d.L}</td>
+            <td class="px-3 py-2">${d.C}</td>
+            <td class="px-3 py-2">${d.f}</td>
+            <td class="px-3 py-2 text-sky-500 font-bold">${d.Z}</td>
+            <td class="px-3 py-2 text-sky-500 font-bold">${d.I}</td>
+            <td class="px-3 py-2">${d.phase}</td>
+          </tr>
+        `).join('');
+        if (dataLog.length === 0) {
+          el.tbody.innerHTML = `<tr><td colspan="8" class="px-3 py-4 text-center text-slate-400">Belum ada data. Klik "Catat Data".</td></tr>`;
+        }
+      }
+
+window.vlabLabRefresh = () => { updateChartTheme(); calculate(); };
+
+      // --- 8. Inisialisasi Awal ---
+      initChart();
+      drawCircuit();
+      
+      // Panggil perhitungan setelah UI dirender sempurna
+      setTimeout(() => {
+        ['R', 'L', 'C', 'f'].forEach(type => syncInputs(type, inputs[type].slider.value));
+        renderTable();
+        if (window.lucide) lucide.createIcons();
+      }, 100);
+
+    })(); // <--- Penutup fungsi initLabRLC
+  </script>
+</body>
+</html>
